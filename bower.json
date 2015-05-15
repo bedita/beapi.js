@@ -1,0 +1,22 @@
+{
+  "name": "beapi.js",
+  "version": "0.0.1",
+  "authors": [
+    "BEdita Team <info@bedita.com>"
+  ],
+  "description": "Manage BEdita API calls on your javascript client",
+  "main": "beapi.js",
+  "keywords": [
+    "bedita",
+    "api"
+  ],
+  "license": "LGP",
+  "homepage": "https://github.com/bedita/beapi.js",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
