@@ -1,0 +1,30 @@
+{
+  "name": "beapi.js",
+  "version": "0.0.1",
+  "description": "Manage BEdita API calls on your javascript client",
+  "main": "beapi.js",
+  "scripts": {
+    "test": "mocha test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bedita/beapi.js"
+  },
+  "keywords": [
+    "bedita",
+    "api"
+  ],
+  "author": "BEdita Team",
+  "license": "LGP",
+  "bugs": {
+    "url": "https://github.com/bedita/beapi.js/issues"
+  },
+  "homepage": "https://github.com/bedita/beapi.js",
+  "dependencies": {
+    "node-localstorage": "^0.5.0",
+    "xmlhttprequest": "^1.7.0"
+  },
+  "devDependencies": {
+    "chai": "^2.3.0"
+  }
+}
