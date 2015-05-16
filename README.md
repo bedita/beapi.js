@@ -60,23 +60,27 @@ Right now, **beapi.js** stores `access_token`, `refresh_token` and `access_token
 ##Test
 
 ###Prerequisites:
-- Install nodejs
+- Install [nodejs](https://nodejs.org/)
 - Install mocha
 
 		npm install mocha -g
 		
 ###Install dependencies
 
-- Navigate to the project path and run:
+Navigate to the project path and run:
 
-		npm install
+```
+npm install
+```
 		
 ###Configuration
 
-- Use `test.json.sample` as footprint for you configuration:
+Use `test.json.sample` as footprint for you configuration:
 
-		mv test.json.sample test.json
-		
+```
+mv test.json.sample test.json
+```
+
 ###Run the tests
 
 ```
