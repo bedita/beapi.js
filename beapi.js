@@ -1,6 +1,5 @@
 (function() {
 
-	var storage = null;
 	var xhr = null;
 
 	var _defaults = function() {
@@ -94,11 +93,11 @@
 
 	if ('object' == typeof module && 'object' == typeof module.exports) {
 		var LocalStorage = require('node-localstorage').LocalStorage;
-		storage = new LocalStorage('./beapi');
+		beapi.storage = new LocalStorage('./beapi');
 		xhr = require('xmlhttprequest').XMLHttpRequest;
 		module.exports = beapi;
 	} else {
-		storage = window.localStorage;
+		beapi.storage = window.localStorage;
 		xhr = XMLHttpRequest;
 		window.beapi = beapi;
 	}
@@ -263,18 +262,18 @@
 		var promise = be.post(options);
 		promise.then(function(res) {
 			if (res && res.data && res.data.access_token) {
-				storage.setItem(beapi.accessTokenKey, res.data.access_token);
-				storage.setItem(beapi.refreshTokenKey, res.data.refresh_token);
-				storage.setItem(beapi.accessTokenExpireDate, Date.now() + res.data.expires_in * 1000);
+				beapi.storage.setItem(beapi.accessTokenKey, res.data.access_token);
+				beapi.storage.setItem(beapi.refreshTokenKey, res.data.refresh_token);
+				beapi.storage.setItem(beapi.accessTokenExpireDate, Date.now() + res.data.expires_in * 1000);
 			} else {
-				storage.removeItem(beapi.accessTokenKey);
-				storage.removeItem(beapi.refreshTokenKey);
-				storage.removeItem(beapi.accessTokenExpireDate);
+				beapi.storage.removeItem(beapi.accessTokenKey);
+				beapi.storage.removeItem(beapi.refreshTokenKey);
+				beapi.storage.removeItem(beapi.accessTokenExpireDate);
 			}
 		}, function() {
-			storage.removeItem(beapi.accessTokenKey);
-			storage.removeItem(beapi.refreshTokenKey);
-			storage.removeItem(beapi.accessTokenExpireDate);
+			beapi.storage.removeItem(beapi.accessTokenKey);
+			beapi.storage.removeItem(beapi.refreshTokenKey);
+			beapi.storage.removeItem(beapi.accessTokenExpireDate);
 		});
 		return promise;
 	}
@@ -296,8 +295,8 @@
 				refresh_token: this.getRefreshToken(),
 			}
 		}
-		storage.removeItem(beapi.accessTokenKey);
-		storage.removeItem(beapi.accessTokenExpireDate);
+		beapi.storage.removeItem(beapi.accessTokenKey);
+		beapi.storage.removeItem(beapi.accessTokenExpireDate);
 		return processAuth(this, options);
 	}
 
@@ -308,9 +307,9 @@
 
 		promise.done(function(res) {
 			if (res && res.data && res.data.logout) {
-				storage.removeItem(beapi.accessTokenKey);
-				storage.removeItem(beapi.refreshTokenKey);
-				storage.removeItem(beapi.accessTokenExpireDate);
+				beapi.storage.removeItem(beapi.accessTokenKey);
+				beapi.storage.removeItem(beapi.refreshTokenKey);
+				beapi.storage.removeItem(beapi.accessTokenExpireDate);
 			}
 		});
 
@@ -318,15 +317,15 @@
 	}
 
 	beapi.prototype.getAccessToken = function() {
-		return storage.getItem(beapi.accessTokenKey);
+		return beapi.storage.getItem(beapi.accessTokenKey);
 	}
 
 	beapi.prototype.getRefreshToken = function() {
-		return storage.getItem(beapi.refreshTokenKey);
+		return beapi.storage.getItem(beapi.refreshTokenKey);
 	}
 
 	beapi.prototype.getAccessTokenExpireDate = function() {
-		return storage.getItem(beapi.accessTokenExpireDate);
+		return beapi.storage.getItem(beapi.accessTokenExpireDate);
 	}
 
 	beapi.prototype.isTokenExpired = function() {
