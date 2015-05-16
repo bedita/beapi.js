@@ -33,34 +33,45 @@ describe('beapi.js', function() {
         var profile = null;
         var newAccessToken = null;
 
+        var count = 0;
+
         beforeEach(function(done) {
-            var p = api.auth(conf.auth.username, conf.auth.password);
-            p.then(function(res) {
-                if (res) {
-                    accessToken = res.data.access_token;
-                    refreshToken = res.data.refresh_token;
-                    expireTime = res.data.expires_in;
-                }
+            if (count == 0) {
+                var p = api.auth(conf.auth.username, conf.auth.password);
+                p.then(function(res) {
+                    if (res) {
+                        accessToken = res.data.access_token;
+                        refreshToken = res.data.refresh_token;
+                        expireTime = res.data.expires_in;
+                    }
+                    done();
+                }, function() {
+                    done();
+                });
+            }
+            if (count == 1) {
                 api.get('me').then(function(res) {
                     if (res && res.data) {
                         profile = res.data.object;
                     }
-                    api.refreshToken().then(function(res) {
-                        if (res) {
-                            newAccessToken = res.data.access_token;
-                            refreshToken = res.data.refresh_token;
-                            expireTime = res.data.expires_in;
-                        }
-                        done();
-                    }, function(res) {
-                        done();
-                    });
+                    done();
                 }, function() {
                     done();
                 });
-            }, function() {
-                done();
-            });
+            }
+            if (count == 2) {
+                api.refreshToken().then(function(res) {
+                    if (res) {
+                        newAccessToken = res.data.access_token;
+                        refreshToken = res.data.refresh_token;
+                        expireTime = res.data.expires_in;
+                    }
+                    done();
+                }, function(res) {
+                    done();
+                });
+            }
+            count++;
         });
 
         it('it should return access and refresh tokens', function() {
