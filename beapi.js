@@ -116,10 +116,9 @@
 	}
 
 	// options is a API uri builder result
-	beapi.prototype.xhr = function(options) {
+	beapi.xhr = function(options) {
 		var defaults = {
 			type: 'GET',
-			url: this.baseUrl,
 			async: true,
 			responseType: 'text/json',
 			headers: {},
@@ -206,7 +205,7 @@
 		if (be.getAccessToken() && be.isTokenExpired()) {
 			var dfr = new Deferred();
 			var doXHR = function() {
-				be.xhr(options).then(function() {
+				beapi.xhr(options).then(function() {
 					dfr.resolve.apply(this, arguments);
 				}, function() {
 					dfr.reject.apply(this, arguments);
@@ -220,7 +219,7 @@
 			});
 			return dfr.promise;
 		} else {
-			return be.xhr(options);
+			return beapi.xhr(options);
 		}
 	}
 
