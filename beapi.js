@@ -156,8 +156,7 @@
 
 		oReq.open(opt.type, opt.url, opt.async);
 		oReq.responseType = opt.responseType;
-
-		if (opt.headers && 'object' == typeof headers) {
+		if (opt.headers && 'object' == typeof opt.headers) {
 			for (var k in opt.headers) {
 				oReq.setRequestHeader(k, opt.headers[k]);
 			}
@@ -269,14 +268,14 @@
 				storage.setItem(beapi.refreshTokenKey, res.data.refresh_token);
 				storage.setItem(beapi.accessTokenExpireDate, Date.now() + res.data.expires_in * 1000);
 			} else {
-				storage.removeItem(beapi.accessTokenKey);
-				storage.removeItem(beapi.refreshTokenKey);
-				storage.removeItem(beapi.accessTokenExpireDate);
+				// storage.removeItem(beapi.accessTokenKey);
+				// storage.removeItem(beapi.refreshTokenKey);
+				// storage.removeItem(beapi.accessTokenExpireDate);
 			}
 		}, function() {
-			storage.removeItem(beapi.accessTokenKey);
-			storage.removeItem(beapi.refreshTokenKey);
-			storage.removeItem(beapi.accessTokenExpireDate);
+			// storage.removeItem(beapi.accessTokenKey);
+			// storage.removeItem(beapi.refreshTokenKey);
+			// storage.removeItem(beapi.accessTokenExpireDate);
 		});
 		return promise;
 	}
