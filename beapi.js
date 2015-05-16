@@ -164,7 +164,11 @@
 		}
 
 		if (opt.type == 'POST' || opt.type == 'PUT' && opt.data !== undefined) {
-			oReq.send(opt.data);
+			var data = opt.data;
+			if ('object' == typeof data) {
+				data = JSON.stringify(data);
+			}
+			oReq.send(data);
 		} else {
 			oReq.send();
 		}
@@ -172,24 +176,24 @@
 		return dfr.promise;
 	}
 
-	beapi.prototype.optionsBuilder = function(options) {
+	var optionsBuilder = function(be, options) {
 		var res = options || {};
 
-		var url = options.url || this.baseUrl;
+		var url = options.url || be.baseUrl;
 		if (/^([\w\-]+:)?\/{2,3}/.test(url)) {
-			if (url.indexOf(this.baseUrl) !== 0) {
+			if (url.indexOf(be.baseUrl) !== 0) {
 				throw new Exception('Invalid url');
 			}
 		} else {
 			if (url[0] !== '/') {
-				url = this.baseUrl + (this.baseUrl[this.baseUrl.length - 1]) == '/' ? url : '/' + url;
+				url = be.baseUrl + ((be.baseUrl[be.baseUrl.length - 1]) == '/' ? url : '/' + url);
 			} else {
-				url = this.baseUrl + (this.baseUrl[this.baseUrl.length - 1]) == '/' ? url.slice(1) : url;
+				url = be.baseUrl + ((be.baseUrl[be.baseUrl.length - 1]) == '/' ? url.slice(1) : url);
 			}
 		}
 		res['url'] = url;
 
-		var accessToken = this.getAccessToken();
+		var accessToken = be.getAccessToken();
 		if (accessToken) {
 			res['headers'] = (res['headers'] && 'object' == typeof res['headers']) ? res['headers'] : {};
 			res['headers']['Authorization'] = 'Bearer ' + accessToken;
@@ -221,35 +225,43 @@
 		}
 	}
 
+	var processInput = function(options) {
+		if (typeof options == 'string') {
+			options = { url: options };
+		}
+		return options;
+	}
+
 	beapi.prototype.get = function(options) {
-		options = options || {};
+		options = options ? processInput(options) : {};
 		options.type = 'GET';
-		options = this.optionsBuilder(options);
+		options = optionsBuilder(this, options);
 		return processXHR(this, options);
 	}
 
 	beapi.prototype.post = function(options) {
-		options = options || {};
+		options = options ? processInput(options) : {};
 		options.type = 'POST';
-		options = this.optionsBuilder(options);
+		options = optionsBuilder(this, options);
 		return processXHR(this, options);
 	}
 
 	beapi.prototype.put = function(options) {
-		options = options || {};
+		options = options ? processInput(options) : {};
 		options.type = 'PUT';
-		options = this.optionsBuilder(options);
+		options = optionsBuilder(this, options);
 		return processXHR(this, options);
 	}
 
 	beapi.prototype.delete = function(options) {
-		options = options || {};
+		options = options ? processInput(options) : {};
 		options.type = 'DELETE';
-		options = this.optionsBuilder(options);
+		options = optionsBuilder(this, options);
 		return processXHR(this, options);
 	}
 
 	var processAuth = function(be, options) {
+		options.url = 'auth';
 		var promise = be.post(options);
 		promise.then(function(res) {
 			if (res && res.data && res.data.access_token) {
@@ -271,7 +283,6 @@
 
 	beapi.prototype.auth = function(user, pwd) {
 		var options = {
-			url: 'authorize',
 			data: {
 				username: user,
 				password: pwd
@@ -282,7 +293,6 @@
 
 	beapi.prototype.refreshToken = function(refreshToken) {
 		var options = {
-			url: 'authorize',
 			data: {
 				grant_type: 'refresh_token',
 				refresh_token: refreshToken,

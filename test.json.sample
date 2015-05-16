@@ -1,3 +1,7 @@
 {
-  "baseUrl": "..."
+    "baseUrl": "...",
+    "auth": {
+        "username": "...",
+        "password": "..."
+    }
 }
