@@ -12,12 +12,11 @@ Manage BEdita API calls on your javascript client using this tiny library in you
 	- Include in your app
 			
 			<script type="text/javascript" src="path/to/beapi.js"></script>
-			
-##Use with nodejs
 
-```
-npm install beapi.js
-```
+- Via npm:
+
+		npm install beapi.js
+			
 
 ##Compatibility
 
