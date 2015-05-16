@@ -32,6 +32,7 @@ describe('beapi.js', function() {
         var expireTime = null;
         var profile = null;
         var newAccessToken = null;
+        var hasLogout = false;
 
         var count = 0;
 
@@ -71,6 +72,16 @@ describe('beapi.js', function() {
                     done();
                 });
             }
+            if (count == 3) {
+                api.logout().then(function() {
+                    console.log('weee', api.getAccessToken());
+                    hasLogout = true;
+                    newAccessToken = api.getAccessToken();
+                    done();
+                }, function() {
+                    done();
+                });
+            }
             count++;
         });
 
@@ -91,5 +102,10 @@ describe('beapi.js', function() {
             expect(newAccessToken).to.not.equal(null);
             expect(accessToken).to.not.equal(newAccessToken);
         });
+
+        // it('it should logout and destroy the session', function() {
+        //     expect(newAccessToken).to.equal(undefined);
+        //     expect(hasLogout).to.equal(true);
+        // });
     })
 });

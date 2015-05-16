@@ -297,15 +297,17 @@
 				refresh_token: this.getRefreshToken(),
 			}
 		}
+		storage.removeItem(beapi.accessTokenKey);
+		storage.removeItem(beapi.accessTokenExpireDate);
 		return processAuth(this, options);
 	}
 
 	beapi.prototype.logout = function() {
-		var promise = this.processXHR({
-				type: 'DELETE'
+		var promise = this.delete({
+				url: 'auth'
 			});
 
-		promise.done(function() {
+		promise.done(function(res) {
 			if (res && res.data && res.data.logout) {
 				storage.removeItem(beapi.accessTokenKey);
 				storage.removeItem(beapi.refreshTokenKey);
