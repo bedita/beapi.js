@@ -290,11 +290,11 @@
 		return processAuth(this, options);
 	}
 
-	beapi.prototype.refreshToken = function(refreshToken) {
+	beapi.prototype.refreshToken = function() {
 		var options = {
 			data: {
 				grant_type: 'refresh_token',
-				refresh_token: refreshToken,
+				refresh_token: this.getRefreshToken(),
 			}
 		}
 		return processAuth(this, options);

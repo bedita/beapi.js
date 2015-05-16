@@ -45,8 +45,17 @@ describe('beapi.js', function() {
                     if (res && res.data) {
                         profile = res.data.object;
                     }
-                    done();
-                }, function(res) {
+                    api.refreshToken().then(function(res) {
+                        if (res) {
+                            newAccessToken = res.data.access_token;
+                            refreshToken = res.data.refresh_token;
+                            expireTime = res.data.expires_in;
+                        }
+                        done();
+                    }, function(res) {
+                        done();
+                    });
+                }, function() {
                     done();
                 });
             }, function() {
@@ -65,6 +74,11 @@ describe('beapi.js', function() {
         it('it should return the profile id', function() {
             expect(profile).to.not.equal(null);
             expect(typeof profile.id).to.equal('number');
+        });
+
+        it('it should return the a new access token after refresh', function() {
+            expect(newAccessToken).to.not.equal(null);
+            expect(accessToken).to.not.equal(newAccessToken);
         });
     })
 });
