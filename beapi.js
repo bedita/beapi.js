@@ -198,13 +198,129 @@
 		return res;
 	}
 
-	beapi.prototype.getAccessToken = function() {
-		return storage.getItem('access');
+	var processXHR = function(be, options) {
+		options = options || {};
+		if (be.getAccessToken() && be.isTokenExpired()) {
+			var dfr = new Deferred();
+			var doXHR = function() {
+				be.xhr(options).then(function() {
+					dfr.resolve.apply(this, arguments);
+				}, function() {
+					dfr.reject.apply(this, arguments);
+				});
+			}
+			be.refreshToken().then(function() {
+				doXHR();
+			}, function() {
+				delete options.headers['Authorization'];
+				doXHR();
+			});
+			return dfr.promise;
+		} else {
+			return be.xhr(options);
+		}
 	}
 
 	beapi.prototype.get = function(options) {
-		var build = this.optionsBuilder(options);
-		return this.xhr(options);
+		options = options || {};
+		options.type = 'GET';
+		options = this.optionsBuilder(options);
+		return processXHR(this, options);
 	}
-	
+
+	beapi.prototype.post = function(options) {
+		options = options || {};
+		options.type = 'POST';
+		options = this.optionsBuilder(options);
+		return processXHR(this, options);
+	}
+
+	beapi.prototype.put = function(options) {
+		options = options || {};
+		options.type = 'PUT';
+		options = this.optionsBuilder(options);
+		return processXHR(this, options);
+	}
+
+	beapi.prototype.delete = function(options) {
+		options = options || {};
+		options.type = 'DELETE';
+		options = this.optionsBuilder(options);
+		return processXHR(this, options);
+	}
+
+	var processAuth = function(be, options) {
+		var promise = be.post(options);
+		promise.then(function(res) {
+			if (res && res.data && res.data.access_token) {
+				storage.setItem(beapi.accessTokenKey, res.data.access_token);
+				storage.setItem(beapi.refreshTokenKey, res.data.refresh_token);
+				storage.setItem(beapi.accessTokenExpireDate, Date.now() + res.data.expires_in * 1000);
+			} else {
+				storage.removeItem(beapi.accessTokenKey);
+				storage.removeItem(beapi.refreshTokenKey);
+				storage.removeItem(beapi.accessTokenExpireDate);
+			}
+		}, function() {
+			storage.removeItem(beapi.accessTokenKey);
+			storage.removeItem(beapi.refreshTokenKey);
+			storage.removeItem(beapi.accessTokenExpireDate);
+		});
+		return promise;
+	}
+
+	beapi.prototype.auth = function(user, pwd) {
+		var options = {
+			url: 'authorize',
+			data: {
+				username: user,
+				password: pwd
+			}
+		}
+		return processAuth(this, options);
+	}
+
+	beapi.prototype.refreshToken = function(refreshToken) {
+		var options = {
+			url: 'authorize',
+			data: {
+				grant_type: 'refresh_token',
+				refresh_token: refreshToken,
+			}
+		}
+		return processAuth(this, options);
+	}
+
+	beapi.prototype.logout = function() {
+		var promise = this.processXHR({
+				type: 'DELETE'
+			});
+
+		promise.done(function() {
+			if (res && res.data && res.data.logout) {
+				storage.removeItem(beapi.accessTokenKey);
+				storage.removeItem(beapi.refreshTokenKey);
+				storage.removeItem(beapi.accessTokenExpireDate);
+			}
+		});
+
+		return promise;
+	}
+
+	beapi.prototype.getAccessToken = function() {
+		return storage.getItem(beapi.accessTokenKey);
+	}
+
+	beapi.prototype.getRefreshToken = function() {
+		return storage.getItem(beapi.refreshTokenKey);
+	}
+
+	beapi.prototype.getAccessTokenExpireDate = function() {
+		return storage.getItem(beapi.accessTokenExpireDate);
+	}
+
+	beapi.prototype.isTokenExpired = function() {
+		return Date.now() >= this.getAccessTokenExpireDate();
+	}
+
 })();
