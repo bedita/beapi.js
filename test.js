@@ -103,9 +103,9 @@ describe('beapi.js', function() {
             expect(accessToken).to.not.equal(newAccessToken);
         });
 
-        // it('it should logout and destroy the session', function() {
-        //     expect(newAccessToken).to.equal(undefined);
-        //     expect(hasLogout).to.equal(true);
-        // });
+        it('it should logout and destroy the session', function() {
+            expect(newAccessToken).to.equal(undefined);
+            expect(hasLogout).to.equal(true);
+        });
     })
 });
