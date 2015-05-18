@@ -1,4 +1,5 @@
 .DS_Store
 node_modules
 test.json
+npm-debug.log
 beapi/*
