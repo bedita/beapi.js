@@ -13,6 +13,17 @@
         return res;
     }
 
+    var _extend = function() {
+        var res = arguments[0];
+        for (var i = 1; i < arguments.length; i++) {
+            var obj = arguments[i];
+            for (var k in obj) {
+                res[k] = obj[k];
+            }
+        }
+        return res;
+    }
+
     var Deferred = function() {
         this.promise = new Promise();
     }
@@ -238,15 +249,17 @@
         return processXHR(this, options);
     }
 
-    beapi.prototype.post = function(options) {
+    beapi.prototype.post = function(options, data) {
         options = options ? processInput(options) : {};
+        options.data = data ? _extend(options.data || {}, data) : options.data;
         options.type = 'POST';
         options = optionsBuilder(this, options);
         return processXHR(this, options);
     }
 
-    beapi.prototype.put = function(options) {
+    beapi.prototype.put = function(options, data) {
         options = options ? processInput(options) : {};
+        options.data = data ? _extend(options.data || {}, data) : options.data;
         options.type = 'PUT';
         options = optionsBuilder(this, options);
         return processXHR(this, options);
