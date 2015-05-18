@@ -41,10 +41,43 @@ Right now, **beapi.js** stores `access_token`, `refresh_token` and `access_token
 
 ##beapi.js generic methods
 
-###.get(*options*)
-###.post(*options*)
-###.put(*options*)
-###.delete(*options*)
+###.get(*url* |*options*)
+
+Generic GET call.
+
+Accepts:
+
+- `string` *url*: the api endpoint 
+- **or** `object` *options*: an options builder compatible object
+
+###.post(*url* |*options*, [opt] *data*)
+
+Generic POST call.
+
+Accepts:
+
+- `string` *url*: the api endpoint 
+- **or** `object` *options*: an options builder compatible object
+- [optional] `object` *data*: the data body of the POST call. If *options.data* is already defined, *data* will be merge on it.
+
+###.put(*url* |*options*, [opt] *data*)
+
+Generic PUT call.
+
+Accepts:
+
+- `string` *url*: the api endpoint 
+- **or** `object` *options*: an options builder compatible object
+- [optional] `object` *data*: the data body of the PUT call. If *options.data* is already defined, *data* will be merge on it.
+
+###.delete(*url* |*options*)
+
+Generic DELETE call.
+
+Accepts:
+
+- `string` *url*: the api endpoint 
+- **or** `object` *options*: an options builder compatible object
 
 ##beapi.js auth methods
 
