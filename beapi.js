@@ -191,7 +191,7 @@
 		res['url'] = url;
 
 		var accessToken = be.getAccessToken();
-		if (accessToken) {
+		if (accessToken && (!options.data || options.data.grant_type !== 'refresh_token')) {
 			res['headers'] = (res['headers'] && 'object' == typeof res['headers']) ? res['headers'] : {};
 			res['headers']['Authorization'] = 'Bearer ' + accessToken;
 		}
@@ -301,15 +301,15 @@
 	}
 
 	beapi.prototype.logout = function() {
+		beapi.storage.removeItem(beapi.accessTokenKey);
+		beapi.storage.removeItem(beapi.accessTokenExpireDate);
 		var promise = this.delete({
-				url: 'auth'
+				url: 'auth/' + this.getRefreshToken()
 			});
 
 		promise.done(function(res) {
 			if (res && res.data && res.data.logout) {
-				beapi.storage.removeItem(beapi.accessTokenKey);
 				beapi.storage.removeItem(beapi.refreshTokenKey);
-				beapi.storage.removeItem(beapi.accessTokenExpireDate);
 			}
 		});
 
