@@ -1,0 +1,7 @@
+{
+    "baseUrl": "...",
+    "auth": {
+        "username": "...",
+        "password": "..."
+    }
+}
