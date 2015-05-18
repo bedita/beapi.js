@@ -74,7 +74,6 @@ describe('beapi.js', function() {
             }
             if (count == 3) {
                 api.logout().then(function() {
-                    console.log('weee', api.getAccessToken());
                     hasLogout = true;
                     newAccessToken = api.getAccessToken();
                     done();
