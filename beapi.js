@@ -196,6 +196,8 @@
             res['headers']['Authorization'] = 'Bearer ' + accessToken;
         }
 
+        res.type = res.method = res.type || res.method || 'GET';
+
         return res;
     }
 
