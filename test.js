@@ -2,16 +2,14 @@ var beapi = require('./beapi.js');
 var expect = require('chai').expect;
 var conf = require('./test.json');
 
-var api = new beapi({
-    baseUrl: conf.baseUrl
-});
+beapi.baseUrl = conf.baseUrl;
 
-describe('beapi.js', function() {
+describe('bebeapi.js', function() {
     describe('hello world', function() {
         var response = null;
 
         beforeEach(function(done) {
-            var p = api.get('/');
+            var p = beapi.get('/');
             p.then(function(res) {
                 response = res;
                 done();
@@ -38,9 +36,9 @@ describe('beapi.js', function() {
 
         beforeEach(function(done) {
             if (count == 0) {
-                var p = api.auth(conf.auth.username, conf.auth.password);
+                var p = beapi.auth(conf.auth.username, conf.auth.password);
                 p.then(function(res) {
-                    if (res) {
+                    if (res && res.data) {
                         accessToken = res.data.access_token;
                         refreshToken = res.data.refresh_token;
                         expireTime = res.data.expires_in;
@@ -51,18 +49,8 @@ describe('beapi.js', function() {
                 });
             }
             if (count == 1) {
-                api.get('me').then(function(res) {
+                beapi.refreshToken().then(function(res) {
                     if (res && res.data) {
-                        profile = res.data.object;
-                    }
-                    done();
-                }, function() {
-                    done();
-                });
-            }
-            if (count == 2) {
-                api.refreshToken().then(function(res) {
-                    if (res) {
                         newAccessToken = res.data.access_token;
                         refreshToken = res.data.refresh_token;
                         expireTime = res.data.expires_in;
@@ -72,10 +60,10 @@ describe('beapi.js', function() {
                     done();
                 });
             }
-            if (count == 3) {
-                api.logout().then(function() {
+            if (count == 2) {
+                beapi.logout().then(function() {
                     hasLogout = true;
-                    newAccessToken = api.getAccessToken();
+                    newAccessToken = beapi.getAccessToken();
                     done();
                 }, function() {
                     done();
@@ -90,11 +78,6 @@ describe('beapi.js', function() {
             expect(expireTime).to.not.equal(null);
             expect(typeof accessToken).to.equal('string');
             expect(typeof refreshToken).to.equal('string');
-        });
-
-        it('it should return the profile id', function() {
-            expect(profile).to.not.equal(null);
-            expect(typeof profile.id).to.equal('number');
         });
 
         it('it should return the a new access token after refresh', function() {

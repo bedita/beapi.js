@@ -15,7 +15,7 @@
     "api"
   ],
   "author": "BEdita Team",
-  "license": "LGP",
+  "license": "LGPL",
   "bugs": {
     "url": "https://github.com/bedita/beapi.js/issues"
   },

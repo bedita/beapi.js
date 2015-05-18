@@ -113,16 +113,19 @@
         window.beapi = beapi;
     }
 
-    beapi.prototype.baseUrl = '';
-
+    beapi.baseUrl = '';
     beapi.accessTokenKey = 'be_access_token';
     beapi.refreshTokenKey = 'be_refresh_token';
     beapi.accessTokenExpireDate = 'be_access_token_expire_date';
 
     try {
-        beapi.prototype.baseUrl = window.location.protocol + '//' + window.location.hostname + (window.location.port ? ':' + window.location.port: '') + '/api/v1/';
+        beapi.baseUrl = window.location.protocol + '//' + window.location.hostname + (window.location.port ? ':' + window.location.port: '') + '/api/v1/';
     } catch (ex) {
         //
+    }
+
+    beapi.setBaseUrl = function(url) {
+        beapi.baseUrl = url;
     }
 
     // options is a API uri builder result
@@ -163,8 +166,8 @@
             dfr.reject(oReq.responseText, oReq);
         }, false);
 
-        oReq.open(opt.type, opt.url, opt.async);
         oReq.responseType = opt.responseType;
+        oReq.open(opt.type, opt.url, opt.async);
         if (opt.headers && 'object' == typeof opt.headers) {
             for (var k in opt.headers) {
                 oReq.setRequestHeader(k, opt.headers[k]);
@@ -184,25 +187,25 @@
         return dfr.promise;
     }
 
-    var optionsBuilder = function(be, options) {
+    var optionsBuilder = function(options) {
         var res = options || {};
 
-        var url = options.url || be.baseUrl;
+        var url = options.url || beapi.baseUrl;
         if (/^([\w\-]+:)?\/{2,3}/.test(url)) {
-            if (url.indexOf(be.baseUrl) !== 0) {
+            if (url.indexOf(beapi.baseUrl) !== 0) {
                 throw new Exception('Invalid url');
             }
         } else {
             if (url[0] !== '/') {
-                url = be.baseUrl + ((be.baseUrl[be.baseUrl.length - 1]) == '/' ? url : '/' + url);
+                url = beapi.baseUrl + ((beapi.baseUrl[beapi.baseUrl.length - 1]) == '/' ? url : '/' + url);
             } else {
-                url = be.baseUrl + ((be.baseUrl[be.baseUrl.length - 1]) == '/' ? url.slice(1) : url);
+                url = beapi.baseUrl + ((beapi.baseUrl[beapi.baseUrl.length - 1]) == '/' ? url.slice(1) : url);
             }
         }
         res['url'] = url;
 
-        var accessToken = be.getAccessToken();
-        if (accessToken && (!options.data || options.data.grant_type !== 'refresh_token')) {
+        var accessToken = beapi.getAccessToken();
+        if (accessToken) {
             res['headers'] = (res['headers'] && 'object' == typeof res['headers']) ? res['headers'] : {};
             res['headers']['Authorization'] = 'Bearer ' + accessToken;
         }
@@ -212,9 +215,9 @@
         return res;
     }
 
-    var processXHR = function(be, options) {
+    var processXHR = function(options) {
         options = options || {};
-        if (be.getAccessToken() && be.isTokenExpired()) {
+        if (beapi.getAccessToken() && beapi.isTokenExpired()) {
             var dfr = new Deferred();
             var doXHR = function() {
                 beapi.xhr(options).then(function() {
@@ -223,7 +226,7 @@
                     dfr.reject.apply(this, arguments);
                 });
             }
-            be.refreshToken().then(function() {
+            beapi.refreshToken().then(function() {
                 doXHR();
             }, function() {
                 delete options.headers['Authorization'];
@@ -242,39 +245,39 @@
         return options;
     }
 
-    beapi.prototype.get = function(options) {
+    beapi.get = function(options) {
         options = options ? processInput(options) : {};
         options.type = 'GET';
-        options = optionsBuilder(this, options);
-        return processXHR(this, options);
+        options = optionsBuilder(options);
+        return processXHR(options);
     }
 
-    beapi.prototype.post = function(options, data) {
+    beapi.post = function(options, data) {
         options = options ? processInput(options) : {};
         options.data = data ? _extend(options.data || {}, data) : options.data;
         options.type = 'POST';
-        options = optionsBuilder(this, options);
-        return processXHR(this, options);
+        options = optionsBuilder(options);
+        return processXHR(options);
     }
 
-    beapi.prototype.put = function(options, data) {
+    beapi.put = function(options, data) {
         options = options ? processInput(options) : {};
         options.data = data ? _extend(options.data || {}, data) : options.data;
         options.type = 'PUT';
-        options = optionsBuilder(this, options);
-        return processXHR(this, options);
+        options = optionsBuilder(options);
+        return processXHR(options);
     }
 
-    beapi.prototype.delete = function(options) {
+    beapi.delete = function(options) {
         options = options ? processInput(options) : {};
         options.type = 'DELETE';
-        options = optionsBuilder(this, options);
-        return processXHR(this, options);
+        options = optionsBuilder(options);
+        return processXHR(options);
     }
 
-    var processAuth = function(be, options) {
+    var processAuth = function(options) {
         options.url = 'auth';
-        var promise = be.post(options);
+        var promise = beapi.post(options);
         promise.then(function(res) {
             if (res && res.data && res.data.access_token) {
                 beapi.storage.setItem(beapi.accessTokenKey, res.data.access_token);
@@ -293,33 +296,33 @@
         return promise;
     }
 
-    beapi.prototype.auth = function(user, pwd) {
+    beapi.auth = function(user, pwd) {
         var options = {
             data: {
                 username: user,
                 password: pwd
             }
         }
-        return processAuth(this, options);
+        return processAuth(options);
     }
 
-    beapi.prototype.refreshToken = function() {
+    beapi.refreshToken = function() {
         var options = {
             data: {
                 grant_type: 'refresh_token',
-                refresh_token: this.getRefreshToken(),
+                refresh_token: beapi.getRefreshToken(),
             }
         }
         beapi.storage.removeItem(beapi.accessTokenKey);
         beapi.storage.removeItem(beapi.accessTokenExpireDate);
-        return processAuth(this, options);
+        return processAuth(options);
     }
 
-    beapi.prototype.logout = function() {
+    beapi.logout = function() {
         beapi.storage.removeItem(beapi.accessTokenKey);
         beapi.storage.removeItem(beapi.accessTokenExpireDate);
-        var promise = this.delete({
-                url: 'auth/' + this.getRefreshToken()
+        var promise = beapi.delete({
+                url: 'auth/' + beapi.getRefreshToken()
             });
 
         promise.done(function(res) {
@@ -331,20 +334,20 @@
         return promise;
     }
 
-    beapi.prototype.getAccessToken = function() {
+    beapi.getAccessToken = function() {
         return beapi.storage.getItem(beapi.accessTokenKey);
     }
 
-    beapi.prototype.getRefreshToken = function() {
+    beapi.getRefreshToken = function() {
         return beapi.storage.getItem(beapi.refreshTokenKey);
     }
 
-    beapi.prototype.getAccessTokenExpireDate = function() {
+    beapi.getAccessTokenExpireDate = function() {
         return beapi.storage.getItem(beapi.accessTokenExpireDate);
     }
 
-    beapi.prototype.isTokenExpired = function() {
-        return Date.now() >= this.getAccessTokenExpireDate();
+    beapi.isTokenExpired = function() {
+        return Date.now() >= beapi.getAccessTokenExpireDate();
     }
 
 })();
