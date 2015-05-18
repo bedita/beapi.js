@@ -36,48 +36,56 @@ or, if you are using Angular:
 }])
 ```
 
-Right now, **beapi.js** stores `access_token`, `refresh_token` and `access_token_expire_date` in the browser `localStorage` or using node `fs`. If your project needs to support browsers without the localStorage interface, or if you want to use other types of store, you can replace `beapi.storage` with another Object with the same interface.
+Right now, **beapi.js** stores `access_token`, `refresh_token` and `access_token_expire_date` in the browser `localStorage` or using node `fs`. If your project needs to support browsers without the `localStorage` interface, or if you want to use other stores, you can replace `beapi.storage` with another `Object` with the same interface.
 
 
 ##beapi.js generic methods
 
-###.get(*url* |*options*)
+###.get(*url*|*options*)
 
 Generic GET call.
 
 Accepts:
 
-- `string` *url*: the api endpoint 
-- **or** `object` *options*: an options builder compatible object
+- `String` *url*: the api endpoint 
+- **or** `Object` *options*: an options builder compatible object
 
-###.post(*url* |*options*, [opt] *data*)
+Returns a `Promise`.
+
+###.post(*url*|*options*, [opt] *data*)
 
 Generic POST call.
 
 Accepts:
 
-- `string` *url*: the api endpoint 
-- **or** `object` *options*: an options builder compatible object
-- [optional] `object` *data*: the data body of the POST call. If *options.data* is already defined, *data* will be merge on it.
+- `String` *url*: the api endpoint 
+- **or** `Object` *options*: an options builder compatible object
+- [optional] `Object` *data*: the data body of the POST call. If *options.data* is already defined, *data* will be merge on it.
 
-###.put(*url* |*options*, [opt] *data*)
+Returns a `Promise`.
+
+###.put(*url*|*options*, [opt] *data*)
 
 Generic PUT call.
 
 Accepts:
 
-- `string` *url*: the api endpoint 
-- **or** `object` *options*: an options builder compatible object
-- [optional] `object` *data*: the data body of the PUT call. If *options.data* is already defined, *data* will be merge on it.
+- `String` *url*: the api endpoint 
+- **or** `Object` *options*: an options builder compatible object
+- [optional] `Object` *data*: the data body of the PUT call. If *options.data* is already defined, *data* will be merge on it.
 
-###.delete(*url* |*options*)
+Returns a `Promise`.
+
+###.delete(*url*|*options*)
 
 Generic DELETE call.
 
 Accepts:
 
-- `string` *url*: the api endpoint 
-- **or** `object` *options*: an options builder compatible object
+- `String` *url*: the api endpoint 
+- **or** `Object` *options*: an options builder compatible object
+
+Returns a `Promise`.
 
 ##beapi.js auth methods
 
