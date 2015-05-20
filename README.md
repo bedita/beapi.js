@@ -142,7 +142,7 @@ It automatically passes the `refreshToken` in the POST call.
 
 Returns a `Promise`.
 
-##Test
+##Running Tests
 
 ###Prerequisites:
 - Install [nodejs](https://nodejs.org/)
