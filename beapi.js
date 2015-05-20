@@ -30,7 +30,7 @@
 
     Deferred.prototype.resolve = function() {
         var promise = this.promise;
-        if (promise.status == 'pending') {
+        if (promise && promise.status == 'pending') {
             promise.status = 'resolved';
             promise.resolveArgs = arguments;
             var callbacks = promise.callbacks.y;
@@ -42,7 +42,7 @@
 
     Deferred.prototype.reject = function() {
         var promise = this.promise;
-        if (promise.status == 'pending') {
+        if (promise && promise.status == 'pending') {
             promise.status = 'rejected';
             promise.rejectArgs = arguments;
             var callbacks = promise.callbacks.n;
@@ -93,7 +93,105 @@
         fail: function() {
             return this.error.apply(this, arguments);
         }
-    };
+    }
+
+    var RelationList = function RelationList(parent, list, related) {
+        var that = this;
+        list = list || [];
+
+        Object.defineProperty(that, 'length', {
+            enumerable: false,
+            configurable: true,
+            get: function() {
+                return list.length || 0;
+            },
+            set: function() {
+                return list.length || 0;
+            }
+        });
+
+        Object.defineProperty(that, 'item', {
+            enumerable: false,
+            configurable: true,
+            get: function() {
+                return function(index) {
+                    if (index >= 0 && index < that.length) {
+                        var rel = list[index];
+                        if (rel) {
+                            var obj = related[rel.id_right || rel.id_left];
+                            if (obj) {
+                                return new BEObject(obj);
+                            }
+                        }
+                    }
+                }
+            },
+            set: function() {}
+        });
+
+        function bindKeyId(id) {
+            Object.defineProperty(that, id, {
+                enumerable: false,
+                configurable: true,
+                get: function() {
+                    var obj = related[id];
+                    if (obj) {
+                        return new BEObject(obj);
+                    }
+                },
+                set: function(data) {
+                    if (related[id]) {
+                        related[id] = data;
+                    }
+                }
+            });
+        }
+
+        for (var i = 0; i < list.length; i++) {
+            bindKeyId(list[i].id_right || list[i].id_left);
+        }
+    }
+
+    RelationList.prototype.forEach = function(callback) {
+        if (typeof callback !== 'function') {
+            return;
+        }
+        var len = this.length;
+        var that = this;
+        for (var i = 0; i < len; i++) {
+            callback.call(that, that.item(i), i);
+        }
+    }
+
+    var BEObject = function BEObject(data, related) {
+        var that = this;
+        var relations = data.relations || {};
+        var relationList = {};
+        related = related || {};
+
+        delete data['relations'];
+        for (var k in data) {
+            that[k] = data[k];
+        }
+
+        Object.defineProperty(that, 'relations', {
+            enumerable: false,
+            configurable: true,
+            get: function() {
+                return relationList;
+            },
+            set: function(relations) {
+                var that = this;
+                var res = {};
+                for (var k in relations) {
+                    res[k] = new RelationList(that, relations[k], related);
+                }
+                relationList = res;
+            }
+        });
+
+        this.relations = relations;
+    }
 
     var beapi = function(options) {
         options = options || {};
@@ -350,6 +448,19 @@
 
     beapi.isTokenExpired = function() {
         return Date.now() >= beapi.getAccessTokenExpireDate();
+    }
+
+    beapi.objects = function(id, type) {
+        var promise = beapi.get({
+                url: (type || 'objects') + '/' + id
+            });
+
+        promise.done(function(res) {
+            if (res && res.data && res.data.object) {
+                var obj = new BEObject(res.data.object, res.data.related);
+                console.log(obj);
+            }
+        });
     }
 
 })();
