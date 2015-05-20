@@ -319,11 +319,11 @@
     }
 
     beapi.logout = function() {
-        beapi.storage.removeItem(beapi.accessTokenKey);
-        beapi.storage.removeItem(beapi.accessTokenExpireDate);
         var promise = beapi.delete({
                 url: 'auth/' + beapi.getRefreshToken()
             });
+        beapi.storage.removeItem(beapi.accessTokenKey);
+        beapi.storage.removeItem(beapi.accessTokenExpireDate);
 
         promise.done(function(res) {
             if (res && res.data && res.data.logout) {
