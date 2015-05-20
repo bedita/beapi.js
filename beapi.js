@@ -325,11 +325,13 @@
         beapi.storage.removeItem(beapi.accessTokenKey);
         beapi.storage.removeItem(beapi.accessTokenExpireDate);
 
-        promise.done(function(res) {
+        var onLogout = function(res) {
             if (res && res.data && res.data.logout) {
                 beapi.storage.removeItem(beapi.refreshTokenKey);
             }
-        });
+        }
+
+        promise.then(onLogout, onLogout);
 
         return promise;
     }
