@@ -8,7 +8,7 @@ Manage BEdita API calls on your javascript client using this tiny library in you
 		bower install beapi.js
 
 - Via download and reference:
-	- Download beapi.js
+	- Download [beapi.js](https://github.com/bedita/beapi.js/archive/master.zip)
 	- Include in your app
 			
 			<script type="text/javascript" src="path/to/beapi.js"></script>
@@ -90,12 +90,57 @@ Returns a `Promise`.
 ##beapi.js auth methods
 
 ###.auth(*username*, *password*)
+
+Ask for `accessToken` and `refreshToken` to the server through a POST call and save them in the `localStorage`.
+
+If the authentication is successful, every time that a call to the server will be made, the `accessToken` will be passed in the `Authorization` header.
+
+Accepts:
+
+- `String` *username*: the user nickname
+- `String` *password*: the user password
+
+Returns a `Promise`.
+
 ###.getAccessToken()
+
+Read the `accessToken` from `localStorage`.
+
+Returns a `String` **or** `undefined` if the user is not authenticated.
+
 ###.getRefreshToken()
+
+Read the `refreshToken` from `localStorage`.
+
+Returns a `String` **or** `undefined` if the user is not authenticated.
+
 ###.getAccessTokenExpireDate()
+
+Read the expiration date of the `accessToken` from `localStorage`.
+
+Returns a `Date` **or** `undefined` if the user is not authenticated.
+
 ###.isTokenExpired()
+
+Check if `accessToken` has expired.
+
+Returns a `Boolean`.
+
 ###.refreshToken()
+
+Ask for a new `accessToken` and a new `refreshToken` to the server through a POST call and save them in the `localStorage`.
+
+It automatically passes the old `refreshToken` in the POST call.
+
+Returns a `Promise`.
+
 ###.logout()
+
+Ask to the server to invalidate the `refreshToken` through a POST call and remove `accessToken` and `refreshToken` from the `localStorage`. 
+
+It automatically passes the `refreshToken` in the POST call.
+
+Returns a `Promise`.
 
 ##Test
 
