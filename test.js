@@ -25,6 +25,8 @@ describe('bebeapi.js', function() {
         });
     });
     describe('authentication', function() {
+        this.timeout(5000);
+
         var accessToken = null;
         var refreshToken = null;
         var expireTime = null;
@@ -49,25 +51,30 @@ describe('bebeapi.js', function() {
                 });
             }
             if (count == 1) {
-                beapi.refreshToken().then(function(res) {
-                    if (res && res.data) {
-                        newAccessToken = res.data.access_token;
-                        refreshToken = res.data.refresh_token;
-                        expireTime = res.data.expires_in;
-                    }
-                    done();
-                }, function(res) {
-                    done();
-                });
+                setTimeout(function() {
+                    beapi.refreshToken().then(function(res) {
+                        if (res && res.data) {
+                            newAccessToken = res.data.access_token;
+                            refreshToken = res.data.refresh_token;
+                            expireTime = res.data.expires_in;
+                        }
+                        done();
+                    }, function(res) {
+                        done();
+                    });
+                }, 1000);
             }
             if (count == 2) {
-                beapi.logout().then(function() {
-                    hasLogout = true;
-                    newAccessToken = beapi.getAccessToken();
-                    done();
-                }, function() {
-                    done();
-                });
+                setTimeout(function() {
+                    beapi.logout().then(function() {
+                        hasLogout = true;
+                        newAccessToken = beapi.getAccessToken();
+                        done();
+                    }, function(res) {
+                        console.log(res);
+                        done();
+                    });
+                }, 1500);
             }
             count++;
         });
@@ -86,7 +93,7 @@ describe('bebeapi.js', function() {
         });
 
         it('it should logout and destroy the session', function() {
-            expect(newAccessToken).to.equal(undefined);
+            expect(newAccessToken).to.equal(null);
             expect(hasLogout).to.equal(true);
         });
     })
