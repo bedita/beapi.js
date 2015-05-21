@@ -38,6 +38,7 @@
                 callbacks[i].apply(promise, arguments);
             }
         }
+        return promise;
     }
 
     Deferred.prototype.reject = function() {
@@ -50,6 +51,7 @@
                 callbacks[i].apply(promise, arguments);
             }
         }
+        return promise;
     }
 
     var Promise = function() {
@@ -148,7 +150,11 @@
         }
 
         for (var i = 0; i < list.length; i++) {
-            bindKeyId(list[i].id_right || list[i].id_left);
+            if (typeof list[i] == 'object') {
+                bindKeyId(list[i].id_right || list[i].id_left);
+            } else {
+                bindKeyId(list[i]);
+            }
         }
     }
 
@@ -163,16 +169,69 @@
         }
     }
 
+    var BEObjectsRegistry = {};
+
+    BEObjectsRegistry.has = function(obj) {
+        var id = obj;
+        if (typeof id == 'object') {
+            id = obj.id;
+        }
+        return (id && this[id]);
+    }
+
+    BEObjectsRegistry.get = function(id) {
+        if (this.has(id)) {
+            return this[id];
+        }
+    }
+
+    BEObjectsRegistry.add = function(obj) {
+        if (obj.id) {
+            this[obj.id] = obj;
+        }
+    }
+
+    BEObjectsRegistry.remove = function(obj) {
+        if (this.has(obj)) {
+            delete this[obj.id];
+        }
+    }
+
     var BEObject = function BEObject(data, related) {
+        if (BEObjectsRegistry.has(data)) {
+            var obj = BEObjectsRegistry.get(data.id);
+            return obj.update(data, related);
+        } else {
+            this.update(data, related);
+            BEObjectsRegistry.add(this);
+        }
+    }
+
+    BEObject.prototype.fetch = function() {
+        var that = this;
+        if (that.id) {
+            var promise = beapi.objects(that.id);
+            promise.done(function(res) {
+                if (res && res.data && res.data.object) {
+                    that.update(res.data.object);
+                }
+            });
+            return promise;
+        } else {
+            var dfr = new Deferred();
+            return dfr.reject();
+        }
+    }
+
+    var isoDateRegex = /\d{4,}\-\d{2,}\-\d{2,}T\d{2,}:\d{2,}:\d{2,}\+\d{4,}/;
+
+    BEObject.prototype.update = function(data, related) {
         var that = this;
         var relations = data.relations || {};
-        var relationList = {};
+        var children = data.children || {};
+        var relationList = data.relations ? {} : false;
+        var childrenList = data.children ? {} : false;
         related = related || {};
-
-        delete data['relations'];
-        for (var k in data) {
-            that[k] = data[k];
-        }
 
         Object.defineProperty(that, 'relations', {
             enumerable: false,
@@ -190,7 +249,62 @@
             }
         });
 
-        this.relations = relations;
+        if (data.relations) {
+            this.relations = relations;
+        }
+
+        Object.defineProperty(that, 'children', {
+            enumerable: false,
+            configurable: true,
+            get: function() {
+                return childrenList;
+            },
+            set: function(children) {
+                var that = this;
+                var res = {};
+                for (var k in children) {
+                    res[k] = new RelationList(that, children[k], related);
+                }
+                childrenList = res;
+            }
+        });
+
+        if (data.children) {
+            this.children = children;
+        }
+
+        Object.defineProperty(that, 'parent', {
+            enumerable: false,
+            configurable: true,
+            get: function() {
+                if (this.parent_id && related) {
+                    return new BEObject({
+                        id: this.parent_id
+                    });
+                }
+                return false;
+            },
+            set: function() {}
+        });
+
+        delete data['relations'];
+        delete data['children'];
+
+        for (var k in data) {
+            var d = data[k];
+            //check if iso date
+            if (typeof d == 'string' && d.length == 24 && isoDateRegex.test(d)) {
+                var convert = new Date(d);
+                if (!isNaN(convert.valueOf())) {
+                    d = convert;
+                }
+            }
+            if (that[k] !== d) {
+                that[k] = d;
+            }
+        }
+
+        return that;
     }
 
     var beapi = function(options) {
@@ -443,24 +557,37 @@
     }
 
     beapi.getAccessTokenExpireDate = function() {
-        return beapi.storage.getItem(beapi.accessTokenExpireDate);
+        var data = beapi.storage.getItem(beapi.accessTokenExpireDate);
+        if (data) {
+            data = parseInt(data);
+            return new Date(data);
+        }
     }
 
     beapi.isTokenExpired = function() {
-        return Date.now() >= beapi.getAccessTokenExpireDate();
+        return new Date() >= beapi.getAccessTokenExpireDate();
     }
 
     beapi.objects = function(id, type) {
         var promise = beapi.get({
-                url: (type || 'objects') + '/' + id
+                url: (type ? type + 's' : 'objects') + (id ? '/' + id : '')
             });
 
         promise.done(function(res) {
             if (res && res.data && res.data.object) {
-                var obj = new BEObject(res.data.object, res.data.related);
-                console.log(obj);
+                if (Array.isArray(res.data.object)) {
+                    list = [];
+                    for (var i = 0; i < res.data.object.length; i++) {
+                        res.data.object[i] = new BEObject(res.data.object[i], res.data[i].related);
+                    }
+                } else {
+                    res.data.object = new BEObject(res.data.object, res.data.related);
+                }
+                console.log(res.data.object);
             }
         });
+
+        return promise;
     }
 
 })();
