@@ -3,5 +3,6 @@
     "auth": {
         "username": "...",
         "password": "..."
-    }
+    },
+    "publication_id": "..."
 }

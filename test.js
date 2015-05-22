@@ -96,5 +96,26 @@ describe('bebeapi.js', function() {
             expect(newAccessToken).to.equal(null);
             expect(hasLogout).to.equal(true);
         });
-    })
+    });
+    describe('get an object', function() {
+        var object = null;
+
+        beforeEach(function(done) {
+            var p = beapi.objects(conf.publication_id);
+            p.then(function(res) {
+                if (res && res.data && res.data.object) {
+                    response = res.data.object;
+                }
+                done();
+            }, function() {
+                done();
+            });
+        });
+
+        it('it should return a be object', function() {
+            expect(response).to.not.equal(null);
+            expect(typeof response.id).to.equal('number');
+            expect(typeof response.nickname).to.equal('string');
+        });
+    });
 });

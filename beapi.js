@@ -583,7 +583,6 @@
                 } else {
                     res.data.object = new BEObject(res.data.object, res.data.related);
                 }
-                console.log(res.data.object);
             }
         });
 
