@@ -432,18 +432,15 @@
         if (beapi.getAccessToken() && beapi.isTokenExpired()) {
             var dfr = new Deferred();
             var doXHR = function() {
+                delete options.headers['Authorization'];
+                options = optionsBuilder(options);
                 beapi.xhr(options).then(function() {
-                    dfr.resolve.apply(this, arguments);
+                    dfr.resolve.apply(dfr, arguments);
                 }, function() {
-                    dfr.reject.apply(this, arguments);
+                    dfr.reject.apply(dfr, arguments);
                 });
             }
-            beapi.refreshToken().then(function() {
-                doXHR();
-            }, function() {
-                delete options.headers['Authorization'];
-                doXHR();
-            });
+            beapi.refreshToken().then(doXHR, doXHR);
             return dfr.promise;
         } else {
             return beapi.xhr(options);
