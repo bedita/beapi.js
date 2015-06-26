@@ -97,68 +97,53 @@
         }
     }
 
-    var RelationList = function RelationList(parent, list, related) {
-        var that = this;
-        list = list || [];
-
-        Object.defineProperty(that, 'length', {
-            enumerable: false,
-            configurable: true,
-            get: function() {
-                return list.length || 0;
-            },
-            set: function() {
-                return list.length || 0;
-            }
-        });
-
-        Object.defineProperty(that, 'item', {
-            enumerable: false,
-            configurable: true,
-            get: function() {
-                return function(index) {
-                    if (index >= 0 && index < that.length) {
-                        var rel = list[index];
-                        if (rel) {
-                            var obj = related[rel.id_right || rel.id_left];
-                            if (obj) {
-                                return new BEObject(obj);
-                            }
-                        }
-                    }
-                }
-            },
-            set: function() {}
-        });
-
-        function bindKeyId(id) {
-            Object.defineProperty(that, id, {
-                enumerable: false,
-                configurable: true,
+    var BECollection = function(options) {
+        options = options || {};
+        if (options.alias) {
+            this.alias = options.alias;
+            Object.defineProperty(this, 'items', {
+                configurable: false,
                 get: function() {
-                    var obj = related[id];
-                    if (obj) {
-                        return new BEObject(obj);
+                    if (options.filter) {
+                        return options.alias.filter(options.filter);
+                    } else {
+                        return options.alias.items;
                     }
                 },
-                set: function(data) {
-                    if (related[id]) {
-                        related[id] = data;
+                set: function() {}
+            });
+        } else {
+            this.items = [];
+        }
+        this.url = options.url;
+        this.length = options.count || 0;
+    }
+
+    BECollection.prototype.fetch = function(url) {
+        var that = this;
+        if (that.url || url) {
+            if (that.alias) {
+                return that.alias.fetch(that.url || url || undefined);
+            }
+            var promise = beapi.get(that.url || url);
+            promise.done(function(res) {
+                if (res && res.data && res.data.objects) {
+                    for (var i = 0; i < res.data.objects.length; i++) {
+                        var obj = res.data.objects[i];
+                        that.items[i] = new BEObject(obj);
                     }
+                    that.items.slice(res.data.objects.length);
+                    that.length = that.items.length;
                 }
             });
-        }
-
-        for (var i = 0; i < list.length; i++) {
-            if (typeof list[i] == 'object') {
-                bindKeyId(list[i].id_right || list[i].id_left);
-            } else {
-                bindKeyId(list[i]);
-            }
+            return promise;
+        } else {
+            var dfr = new Deferred();
+            return dfr.reject();
         }
     }
 
-    RelationList.prototype.forEach = function(callback) {
+    BECollection.prototype.forEach = function(callback) {
         if (typeof callback !== 'function') {
             return;
         }
@@ -167,6 +152,12 @@
         for (var i = 0; i < len; i++) {
             callback.call(that, that.item(i), i);
         }
+    }
+
+    BECollection.prototype.filter = function(filter) {
+        return this.items.filter(function(item) {
+            return item.is(filter);
+        });
     }
 
     var BEObjectsRegistry = {};
@@ -233,59 +224,39 @@
         var childrenList = data.children ? {} : false;
         related = related || {};
 
-        Object.defineProperty(that, 'relations', {
-            enumerable: false,
-            configurable: true,
-            get: function() {
-                return relationList;
-            },
-            set: function(relations) {
-                var that = this;
-                var res = {};
-                for (var k in relations) {
-                    res[k] = new RelationList(that, relations[k], related);
+        var defineRelation = function(name, options) {
+            var list = new BECollection(options);
+            Object.defineProperty(that.relations, name, {
+                configurable: false,
+                get: function() {
+                    return list;
                 }
-                relationList = res;
-            }
-        });
-
-        if (data.relations) {
-            this.relations = relations;
+            });
         }
 
-        Object.defineProperty(that, 'children', {
-            enumerable: false,
-            configurable: true,
-            get: function() {
-                return childrenList;
-            },
-            set: function(children) {
-                var that = this;
-                var res = {};
-                for (var k in children) {
-                    res[k] = new RelationList(that, children[k], related);
-                }
-                childrenList = res;
+        for (var k in relations) {
+            if (!that.relations) {
+                that.relations = {};
             }
-        });
-
-        if (data.children) {
-            this.children = children;
+            defineRelation(k, relations[k]);
         }
 
-        Object.defineProperty(that, 'parent', {
-            enumerable: false,
-            configurable: true,
-            get: function() {
-                if (this.parent_id && related) {
-                    return new BEObject({
-                        id: this.parent_id
-                    });
-                }
-                return false;
-            },
-            set: function() {}
-        });
+        if (children && !this.children) {
+            this.children = new BECollection({
+                url: children.url,
+                count: children.count
+            });
+            if (children.sections) {
+                this.sections = new BECollection({
+                    alias: this.children,
+                    filter: {
+                        object_type: 'Section'
+                    },
+                    url: children.sections.url,
+                    count: children.sections
+                });
+            }
+        }
 
         delete data['relations'];
         delete data['children'];
@@ -304,7 +275,28 @@
             }
         }
 
+        if (data.parent_id) {
+            this.parent = new BEObject({
+                id: data.parent_id
+            });
+            delete this.parent_id;
+        } else {
+            delete this.parent;
+        }
+
         return that;
+    }
+
+    BEObject.prototype.is = function(filter) {
+        if (typeof filter == 'object') {
+            for (var k in filter) {
+                if (filter[k] !== this[k]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     var beapi = function(options) {
