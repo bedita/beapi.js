@@ -1,7 +1,11 @@
 # beapi.js
 Manage BEdita API calls on your javascript client using this tiny library in your application.
 
-##Use in the browser
+## Use in the browser
+
+- Via npm:
+
+		npm install beapi.js
 
 - Via bower:
 
@@ -12,13 +16,13 @@ Manage BEdita API calls on your javascript client using this tiny library in you
 	- Include in your app
 			
 			<script type="text/javascript" src="path/to/beapi.js"></script>
-
-- Via npm:
-
-		npm install beapi.js
 			
 
-##Compatibility
+### Promise Polyfill
+
+beapi.js uses the new standard [Promise](https://developer.mozilla.org/it/docs/Web/JavaScript/Reference/Global_Objects/Promise) object ([can i use?](http://caniuse.com/#feat=promises)) provided by EcmaScript 6. If you use bower or npm, the polyfill is a dependency of the project, otherwise you can download it [here](https://github.com/jakearchibald/es6-promise).
+
+## Compatibility
 
 **beapi.js** is based on the standard `XMLHttpRequest`, so it is not compatible (yet) with IE8 and IE9.
 
@@ -39,9 +43,9 @@ or, if you are using Angular:
 Right now, **beapi.js** stores `access_token`, `refresh_token` and `access_token_expire_date` in the browser `localStorage` or using node `fs`. If your project needs to support browsers without the `localStorage` interface, or if you want to use other stores, you can replace `beapi.storage` with another `Object` with the same interface.
 
 
-##beapi.js generic methods
+## beapi.js generic methods
 
-###.get(*url*|*options*)
+### .get(*url*|*options*)
 
 Generic GET call.
 
@@ -52,7 +56,7 @@ Accepts:
 
 Returns a `Promise`.
 
-###.post(*url*|*options*, [opt] *data*)
+### .post(*url*|*options*, [opt] *data*)
 
 Generic POST call.
 
@@ -64,7 +68,7 @@ Accepts:
 
 Returns a `Promise`.
 
-###.put(*url*|*options*, [opt] *data*)
+### .put(*url*|*options*, [opt] *data*)
 
 Generic PUT call.
 
@@ -76,7 +80,7 @@ Accepts:
 
 Returns a `Promise`.
 
-###.delete(*url*|*options*)
+### .delete(*url*|*options*)
 
 Generic DELETE call.
 
@@ -87,9 +91,9 @@ Accepts:
 
 Returns a `Promise`.
 
-##beapi.js auth methods
+## beapi.js auth methods
 
-###.auth(*username*, *password*)
+### .auth(*username*, *password*)
 
 Ask for `accessToken` and `refreshToken` to the server through a POST call and save them in the `localStorage`.
 
@@ -102,31 +106,31 @@ Accepts:
 
 Returns a `Promise`.
 
-###.getAccessToken()
+### .getAccessToken()
 
 Read the `accessToken` from `localStorage`.
 
 Returns a `String` **or** `undefined` if the user is not authenticated.
 
-###.getRefreshToken()
+### .getRefreshToken()
 
 Read the `refreshToken` from `localStorage`.
 
 Returns a `String` **or** `undefined` if the user is not authenticated.
 
-###.getAccessTokenExpireDate()
+### .getAccessTokenExpireDate()
 
 Read the expiration date of the `accessToken` from `localStorage`.
 
 Returns a `Date` **or** `undefined` if the user is not authenticated.
 
-###.isTokenExpired()
+### .isTokenExpired()
 
 Check if `accessToken` has expired.
 
 Returns a `Boolean`.
 
-###.refreshToken()
+### .refreshToken()
 
 Ask for a new `accessToken` and a new `refreshToken` to the server through a POST call and save them in the `localStorage`.
 
@@ -134,7 +138,7 @@ It automatically passes the old `refreshToken` in the POST call.
 
 Returns a `Promise`.
 
-###.logout()
+### .logout()
 
 Ask to the server to invalidate the `refreshToken` through a POST call and remove `accessToken` and `refreshToken` from the `localStorage`. 
 
@@ -142,15 +146,48 @@ It automatically passes the `refreshToken` in the POST call.
 
 Returns a `Promise`.
 
-##Running Tests
+## BEObject and BECollection
 
-###Prerequisites:
+### BEObject
+
+When a request for a BEdita object is performed using the `beapi.objects` method, the response is used to build an instance of a `BEObject`. The structure of this object is close to the API response, but with some special changes:
+
+- `relations.*` and `children` become an instance of the [`BECollection`](#BECollection) object.
+- a `section` field as filtered alias to `children`
+- a `parent`, a `BEObject` instance representing the parent object (if `parent_id` field is defined). 
+
+*Methods:*
+
+- **fetch()**: fetch the object data from the server (the object field `id` should be defined)
+- **update(*data*)**: update object data
+- **is(*data*)**: check if an object matches the object data definition.
+
+### BECollection
+
+An Object representing a Collection of BEdita objects.
+
+*Properties:*
+
+- **items**: an Array of `BEObject`s.
+- **url**: the url used to fetch data.
+- **length**: the length of Collection (could be defferent from `items.length`, if you have not yet fetched data).
+
+*Methods:*
+
+- **fetch([opt] *url*)**: fetch the objects data from the server (the collection `url` should be defined).
+- **forEach(*callback*)**: iterate Collection items.
+- **filter(*filter*)**: get an Array of filtered objects.
+
+## Running Tests
+
+### Prerequisites:
+
 - Install [nodejs](https://nodejs.org/)
 - Install mocha
 
 		npm install mocha -g
 		
-###Install dependencies
+### Install dependencies
 
 Navigate to the project path and run:
 
@@ -158,7 +195,7 @@ Navigate to the project path and run:
 npm install
 ```
 		
-###Configuration
+### Configuration
 
 Use `test.json.sample` as footprint for you configuration:
 
@@ -166,7 +203,7 @@ Use `test.json.sample` as footprint for you configuration:
 mv test.json.sample test.json
 ```
 
-###Run the tests
+### Run the tests
 
 ```
 npm test
