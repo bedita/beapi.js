@@ -5,7 +5,7 @@
     "BEdita Team <info@bedita.com>"
   ],
   "description": "Manage BEdita API calls on your javascript client",
-  "main": "beapi.js",
+  "main": "src/beapi.js",
   "keywords": [
     "bedita",
     "api"

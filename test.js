@@ -5,7 +5,7 @@ var conf = require('./test.json');
 beapi.baseUrl = conf.baseUrl;
 
 describe('bebeapi.js', function() {
-    describe('hello world', function() {
+    describe('endpoint list', function() {
         var response = null;
 
         beforeEach(function(done) {
@@ -18,10 +18,9 @@ describe('bebeapi.js', function() {
             });
         });
 
-        it('it should return the hello world message', function() {
+        it('it should return the endpoint list', function() {
             expect(response).to.not.equal(null);
-            expect(response.message).to.not.equal(undefined);
-            expect(response.message).to.equal('Hello World!');
+            expect(typeof response).to.equal('object');
         });
     });
     describe('authentication', function() {
@@ -33,7 +32,6 @@ describe('bebeapi.js', function() {
         var profile = null;
         var newAccessToken = null;
         var hasLogout = false;
-
         var count = 0;
 
         beforeEach(function(done) {

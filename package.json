@@ -2,7 +2,7 @@
   "name": "beapi.js",
   "version": "0.0.1",
   "description": "Manage BEdita API calls on your javascript client",
-  "main": "beapi.js",
+  "main": "src/beapi.js",
   "scripts": {
     "test": "mocha test.js"
   },
