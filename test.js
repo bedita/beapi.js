@@ -1,4 +1,4 @@
-var beapi = require('./beapi.js');
+var beapi = require('./src/beapi.js');
 var expect = require('chai').expect;
 var conf = require('./test.json');
 
