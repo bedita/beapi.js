@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/bedita/beapi.js",
   "dependencies": {
+    "es6-promise": "^2.3.0",
     "node-localstorage": "^0.5.0",
     "xmlhttprequest": "^1.7.0"
   },

@@ -24,79 +24,6 @@
         return res;
     }
 
-    var Deferred = function() {
-        this.promise = new Promise();
-    }
-
-    Deferred.prototype.resolve = function() {
-        var promise = this.promise;
-        if (promise && promise.status == 'pending') {
-            promise.status = 'resolved';
-            promise.resolveArgs = arguments;
-            var callbacks = promise.callbacks.y;
-            for (var i = 0; i < callbacks.length; i++) {
-                callbacks[i].apply(promise, arguments);
-            }
-        }
-        return promise;
-    }
-
-    Deferred.prototype.reject = function() {
-        var promise = this.promise;
-        if (promise && promise.status == 'pending') {
-            promise.status = 'rejected';
-            promise.rejectArgs = arguments;
-            var callbacks = promise.callbacks.n;
-            for (var i = 0; i < callbacks.length; i++) {
-                callbacks[i].apply(promise, arguments);
-            }
-        }
-        return promise;
-    }
-
-    var Promise = function() {
-        this.status = 'pending';
-        this.resolveArgs = [];
-        this.rejectArgs = [];
-        this.callbacks = {
-            y: [],
-            n: []
-        }
-    }
-
-    Promise.prototype = {
-        callbacks: {},
-        then: function(y, n) {
-            if (y && 'function' == typeof y) {
-                if (this.status == 'pending') {
-                    this.callbacks.y.push(y);
-                } else if (this.status == 'resolved') {
-                    y.apply(this, this.resolveArgs)
-                }
-            }
-            if (n && 'function' == typeof n) {
-                if (this.status == 'pending') {
-                    this.callbacks.n.push(n);   
-                } else if (this.status == 'rejected') {
-                    n.apply(this, this.rejectArgs)
-                }
-            }
-            return this;
-        },
-        done: function(y) {
-            return this.then.call(this, y);
-        },
-        success: function() {
-            return this.done.apply(this, arguments);
-        },
-        error: function(n) {
-            return this.then.call(this, null, n);
-        },
-        fail: function() {
-            return this.error.apply(this, arguments);
-        }
-    }
-
     var BECollection = function(options) {
         options = options || {};
         if (options.alias) {
@@ -121,26 +48,28 @@
 
     BECollection.prototype.fetch = function(url) {
         var that = this;
-        if (that.url || url) {
-            if (that.alias) {
-                return that.alias.fetch(that.url || url || undefined);
-            }
-            var promise = beapi.get(that.url || url);
-            promise.done(function(res) {
-                if (res && res.data && res.data.objects) {
-                    for (var i = 0; i < res.data.objects.length; i++) {
-                        var obj = res.data.objects[i];
-                        that.items[i] = new BEObject(obj);
-                    }
-                    that.items.slice(res.data.objects.length);
-                    that.length = that.items.length;
+        return new Promise(function(resolve, reject) {
+            if (that.url || url) {
+                if (that.alias) {
+                    return that.alias.fetch(that.url || url || undefined);
                 }
-            });
-            return promise;
-        } else {
-            var dfr = new Deferred();
-            return dfr.reject();
-        }
+                beapi.get(that.url || url).then(function(res) {
+                    if (res && res.data && res.data.objects) {
+                        for (var i = 0; i < res.data.objects.length; i++) {
+                            var obj = res.data.objects[i];
+                            that.items[i] = new BEObject(obj);
+                        }
+                        that.items.slice(res.data.objects.length);
+                        that.length = that.items.length;
+                    }
+                    resolve.apply(this, arguments);
+                }, function() {
+                    reject.apply(this, arguments);
+                });
+            } else {
+                reject();
+            }
+        });
     }
 
     BECollection.prototype.forEach = function(callback) {
@@ -200,18 +129,19 @@
 
     BEObject.prototype.fetch = function() {
         var that = this;
-        if (that.id) {
-            var promise = beapi.objects(that.id);
-            promise.done(function(res) {
-                if (res && res.data && res.data.object) {
-                    that.update(res.data.object);
-                }
-            });
-            return promise;
-        } else {
-            var dfr = new Deferred();
-            return dfr.reject();
-        }
+        return new Promise(function(resolve, reject) {
+            if (that.id) {
+                var promise = beapi.objects(that.id);
+                promise.then(function(res) {
+                    if (res && res.data && res.data.object) {
+                        that.update(res.data.object);
+                    }
+                });
+                return promise;
+            } else {
+                reject();
+            }
+        });
     }
 
     var isoDateRegex = /\d{4,}\-\d{2,}\-\d{2,}T\d{2,}:\d{2,}:\d{2,}\+\d{4,}/;
@@ -343,52 +273,51 @@
         }
         var opt = _defaults(defaults, options || {});
         opt.type = opt.type.toUpperCase();
-        var dfr = new Deferred();
-        var oReq = new xhr();
+        return new Promise(function(resolve, reject) {
+            var oReq = new xhr();
 
-        oReq.addEventListener('load', function() {
-            var data = oReq.responseText;
-            if (data) {
-                try {
-                    data = JSON.parse(data);
-                } catch(er) {
-                    //
+            oReq.addEventListener('load', function() {
+                var data = oReq.responseText;
+                if (data) {
+                    try {
+                        data = JSON.parse(data);
+                    } catch(er) {
+                        //
+                    }
+                }
+                if (oReq.status >= 200 && oReq.status < 400) {
+                    resolve(data);
+                } else {
+                    reject(data);
+                }
+            }, false);
+
+            oReq.addEventListener('error', function() {
+                reject(oReq);
+            }, false);
+
+            oReq.addEventListener('abort', function() {
+                reject(oReq);
+            }, false);
+
+            oReq.responseType = opt.responseType;
+            oReq.open(opt.type, opt.url, opt.async);
+            if (opt.headers && 'object' == typeof opt.headers) {
+                for (var k in opt.headers) {
+                    oReq.setRequestHeader(k, opt.headers[k]);
                 }
             }
-            if (oReq.status >= 200 && oReq.status < 400) {
-                dfr.resolve(data, oReq);
+
+            if (opt.type == 'POST' || opt.type == 'PUT' && opt.data !== undefined) {
+                var data = opt.data;
+                if ('object' == typeof data) {
+                    data = JSON.stringify(data);
+                }
+                oReq.send(data);
             } else {
-                dfr.reject(data, oReq);
+                oReq.send();
             }
-        }, false);
-
-        oReq.addEventListener('error', function() {
-            dfr.reject(oReq.responseText, oReq);
-        }, false);
-
-        oReq.addEventListener('abort', function() {
-            dfr.reject(oReq.responseText, oReq);
-        }, false);
-
-        oReq.responseType = opt.responseType;
-        oReq.open(opt.type, opt.url, opt.async);
-        if (opt.headers && 'object' == typeof opt.headers) {
-            for (var k in opt.headers) {
-                oReq.setRequestHeader(k, opt.headers[k]);
-            }
-        }
-
-        if (opt.type == 'POST' || opt.type == 'PUT' && opt.data !== undefined) {
-            var data = opt.data;
-            if ('object' == typeof data) {
-                data = JSON.stringify(data);
-            }
-            oReq.send(data);
-        } else {
-            oReq.send();
-        }
-
-        return dfr.promise;
+        });
     }
 
     var optionsBuilder = function(options) {
@@ -422,18 +351,18 @@
     var processXHR = function(options) {
         options = options || {};
         if (beapi.getAccessToken() && beapi.isTokenExpired()) {
-            var dfr = new Deferred();
-            var doXHR = function() {
-                delete options.headers['Authorization'];
-                options = optionsBuilder(options);
-                beapi.xhr(options).then(function() {
-                    dfr.resolve.apply(dfr, arguments);
-                }, function() {
-                    dfr.reject.apply(dfr, arguments);
-                });
-            }
-            beapi.refreshToken().then(doXHR, doXHR);
-            return dfr.promise;
+            return new Promise(function(resolve, reject) {
+                var doXHR = function() {
+                    delete options.headers['Authorization'];
+                    options = optionsBuilder(options);
+                    beapi.xhr(options).then(function() {
+                        resolve.apply(this, arguments);
+                    }, function() {
+                        reject.apply(this, arguments);
+                    });
+                }
+                beapi.refreshToken().then(doXHR, doXHR);
+            });
         } else {
             return beapi.xhr(options);
         }
@@ -531,9 +460,7 @@
                 beapi.storage.removeItem(beapi.refreshTokenKey);
             }
         }
-
         promise.then(onLogout, onLogout);
-
         return promise;
     }
 
@@ -561,8 +488,7 @@
         var promise = beapi.get({
                 url: (type ? type + 's' : 'objects') + (id ? '/' + id : '')
             });
-
-        promise.done(function(res) {
+        promise.then(function(res) {
             if (res && res.data && res.data.object) {
                 if (Array.isArray(res.data.object)) {
                     list = [];
@@ -574,7 +500,6 @@
                 }
             }
         });
-
         return promise;
     }
 
