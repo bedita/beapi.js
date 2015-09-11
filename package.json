@@ -4,7 +4,7 @@
   "description": "Manage BEdita API calls on your javascript client",
   "main": "src/beapi.js",
   "scripts": {
-    "test": "mocha test.js"
+    "test": "mocha tests/test.js"
   },
   "repository": {
     "type": "git",
