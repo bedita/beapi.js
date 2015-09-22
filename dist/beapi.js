@@ -183,13 +183,7 @@ var BEObject = (function (_BEModel) {
             var childrenList = data.children ? {} : false;
 
             var defineRelation = function defineRelation(name, options) {
-                var list = new BECollection(options, that.conf);
-                Object.defineProperty(that.relations, name, {
-                    configurable: false,
-                    get: function get() {
-                        return list;
-                    }
-                });
+                that.relations[name] = new BECollection(options, that.conf);
             };
 
             for (var k in relations) {
@@ -215,9 +209,6 @@ var BEObject = (function (_BEModel) {
                     }, that.conf);
                 }
             }
-
-            delete data['relations'];
-            delete data['children'];
 
             for (var k in data) {
                 var d = data[k];
@@ -295,7 +286,7 @@ var BEXhr = (function () {
 			var defaults = {
 				type: 'GET',
 				async: true,
-				responseType: 'text/json',
+				responseType: 'json',
 				headers: {},
 				data: undefined
 			};
@@ -313,7 +304,7 @@ var BEXhr = (function () {
 				var oReq = new BEXhr.xhr();
 
 				oReq.addEventListener('load', function () {
-					var data = oReq.responseText;
+					var data = oReq.response || oReq.responseText;
 					if (data) {
 						try {
 							data = JSON.parse(data);
@@ -711,6 +702,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
+var noop = function noop() {};
+
 var BEApiQueue = (function () {
 	_createClass(BEApiQueue, [{
 		key: '_queue',
@@ -792,7 +785,7 @@ var BEApiQueue = (function () {
 									self._rejecter(err);
 								});
 							}, function (err) {
-								reject(err);
+								self._rejecter(err);
 							});
 						};
 
@@ -815,16 +808,16 @@ var BEApiQueue = (function () {
 		key: 'then',
 		value: function then(done, fail) {
 			if (this._queue.length) {
-				return this._queue[this._queue.length - 1][4].then(done, fail);
+				return this._queue[this._queue.length - 1][4].then(done || noop, fail || noop);
 			} else {
-				return this.all(done, fail);
+				return this.all(done || noop, fail || noop);
 			}
 		}
 	}, {
 		key: 'all',
 		value: function all(done, fail) {
 			if (this._promise) {
-				return this._promise.then(done, fail);
+				return this._promise.then(done || noop, fail || noop);
 			}
 		}
 	}], [{

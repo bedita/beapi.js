@@ -1,5 +1,7 @@
 import { BEApi } from './beapi.next.js';
 
+var noop = function () {}
+
 export class BEApiQueue {
 
 	get _queue() {
@@ -73,7 +75,7 @@ export class BEApiQueue {
 							self._rejecter(err);
 						});
 					}, function (err) {
-						reject(err);
+						self._rejecter(err);
 					});
 				}
 
@@ -93,15 +95,15 @@ export class BEApiQueue {
 
 	then(done, fail) {
 		if (this._queue.length) {
-			return this._queue[this._queue.length - 1][4].then(done, fail);
+			return this._queue[this._queue.length - 1][4].then(done || noop, fail || noop);
 		} else {
-			return this.all(done, fail);
+			return this.all(done || noop, fail || noop);
 		}
 	}
 
 	all(done, fail) {
 		if (this._promise) {
-			return this._promise.then(done, fail);
+			return this._promise.then(done || noop, fail || noop);
 		}
 	}
 

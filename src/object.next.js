@@ -37,13 +37,7 @@ export class BEObject extends BEModel {
         var childrenList = data.children ? {} : false;
 
         var defineRelation = function(name, options) {
-            var list = new BECollection(options, that.conf);
-            Object.defineProperty(that.relations, name, {
-                configurable: false,
-                get: function() {
-                    return list;
-                }
-            });
+            that.relations[name] = new BECollection(options, that.conf);
         }
 
         for (var k in relations) {
@@ -69,9 +63,6 @@ export class BEObject extends BEModel {
                 }, that.conf);
             }
         }
-
-        delete data['relations'];
-        delete data['children'];
 
         for (var k in data) {
             var d = data[k];

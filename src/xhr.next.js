@@ -20,7 +20,7 @@ export class BEXhr {
 		var defaults = {
 			type: 'GET',
 			async: true,
-			responseType: 'text/json',
+			responseType: 'json',
 			headers: {},
 			data: undefined
 		}
@@ -38,7 +38,7 @@ export class BEXhr {
 			var oReq = new BEXhr.xhr();
 
 			oReq.addEventListener('load', function() {
-				var data = oReq.responseText;
+				var data = oReq.response || oReq.responseText;
 				if (data) {
 					try {
 						data = JSON.parse(data);

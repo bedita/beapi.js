@@ -129,12 +129,15 @@ describe('beapi.js', function() {
 			).then(function (modules) {
 				BECollection = modules[0].BECollection;
 				BEObject = modules[1].BEObject;
-	            var p = new BEObject({ id: conf.publication_id }, beapi.conf);
+	            var p = new BEObject({ id: conf.publication_id }, {
+                    baseUrl: conf.baseUrl
+                });
 				var q = p.query()
 						.relation('attach')
 						.relation('poster');
 
 				q.get().then(function(obj) {
+					console.log(obj);
 					response = obj;
 	                done();
 	            }, function(err) {
@@ -162,7 +165,9 @@ describe('beapi.js', function() {
 			).then(function (modules) {
 				BECollection = modules[0].BECollection;
 				BEObject = modules[1].BEObject;
-	            collection = new BECollection({ url: 'objects' }, beapi.conf);
+	            collection = new BECollection({ url: 'objects' }, {
+                    baseUrl: conf.baseUrl
+                });
 				collection.fetch().then(function(obj) {
 					response = obj;
 	                done();
