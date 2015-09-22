@@ -1,7 +1,36 @@
 import { BEXhr } from './xhr.next.js';
-import { BEOptionsBuilder } from './options-builder.next.js';
-import { BEApiChain } from './chain.next.js';
-import './methods/all.next.js';
+
+function processInput(conf = {}) {
+	if (conf) {
+        if (typeof conf == 'string') {
+            conf = { url: conf };
+        }
+        return conf;
+    }
+}
+
+export class BEApiRegistry {
+
+	static add(key, conf = {}) {
+		BEApiRegistry._instances = BEApiRegistry._instances || {};
+		BEApiRegistry._instances[key] = conf;
+	}
+
+	static getInstance(key) {
+		BEApiRegistry._instances = BEApiRegistry._instances || {};
+		if (typeof BEApiRegistry._instances[key] !== 'undefined') {
+			return BEApiRegistry._instances[key];
+		}
+	}
+
+	static remove(key) {
+		BEApiRegistry._instances = BEApiRegistry._instances || {};
+		if (typeof BEApiRegistry._instances[key] !== 'undefined') {
+			delete BEApiRegistry._instances[key];
+		}
+	}
+
+}
 
 export class BEApi {
 
@@ -29,7 +58,7 @@ export class BEApi {
 		BEXhr.xhr = xhr;
 	}
 
-	constructor(options = {}) {
+	constructor(conf = {}) {
 		var opt = {
 			baseUrl: undefined,
 			accessTokenKey: 'be_access_token',
@@ -37,8 +66,8 @@ export class BEApi {
 		    accessTokenExpireDate: 'be_access_token_expire_date',
 		}
 
-        for (var k in options) {
-            opt[k] = options[k];
+        for (var k in conf) {
+            opt[k] = conf[k];
         }
 
 		if (!opt.baseUrl) {
@@ -49,29 +78,62 @@ export class BEApi {
 	    	}
 		}
 
-		this.options = opt;
+		this.conf = opt;
+		BEApiRegistry.add(this.configKey, this.conf);
+	}
+
+	get defaultConfigKey() {
+		return 'default';
+	}
+
+	get configKey() {
+		return (this.conf && this.conf.configKey) || this.defaultConfigKey;
 	}
 
 	_getOptions(opt) {
-		var res = this.options;
+		var res = this.conf;
 		for (var k in opt) {
             res[k] = opt[k];
         }
 		res['accessToken'] = this.getAccessToken();
-		return BEOptionsBuilder.build(res);
+
+		var url = res.url || '/',
+			accessToken = res.accessToken;
+
+		if (/^([\w\-]+:)?\/{2,3}/.test(url)) {
+			if (url.indexOf(conf.baseUrl) !== 0) {
+				throw 'Invalid url';
+			}
+		} else {
+			if (url[0] !== '/') {
+				url = res.baseUrl + ((res.baseUrl[res.baseUrl.length - 1]) == '/' ? url : '/' + url);
+			} else {
+				url = res.baseUrl + ((res.baseUrl[res.baseUrl.length - 1]) == '/' ? url.slice(1) : url);
+			}
+		}
+		res['url'] = url;
+
+		if (accessToken) {
+			res['headers'] = (res['headers'] && 'object' == typeof res['headers']) ? res['headers'] : {};
+			res['headers']['Authorization'] = 'Bearer ' + accessToken;
+		}
+
+		res.type = res.method = res.type || res.method || 'GET';
+
+		return res;
 	}
 
 	setBaseUrl(url) {
-		this.options.baseUrl = url;
+		this.conf.baseUrl = url;
 	}
 
-	processXHR(options = {}) {
+	processXHR(conf = {}) {
         if (this.getAccessToken() && this.isTokenExpired()) {
             return new Promise(function(resolve, reject) {
                 var doXHR = function() {
-                    delete options.headers['Authorization'];
-                    options = this._getOptions(options);
-                    BEXhr.exec(options).then(function() {
+                    delete conf.headers['Authorization'];
+                    conf = this._getOptions(conf);
+                    BEXhr.exec(conf).then(function() {
                         resolve.apply(this, arguments);
                     }, function() {
                         reject.apply(this, arguments);
@@ -80,46 +142,46 @@ export class BEApi {
                 this.refreshToken().then(doXHR, doXHR);
             });
         } else {
-            return BEXhr.exec(options);
+            return BEXhr.exec(conf);
         }
     }
 
-	get(options = {}) {
-        options = BEApi.processInput(options);
-        options.type = 'GET';
-        options = this._getOptions(options);
-        return this.processXHR(options);
+	get(conf = {}) {
+        conf = processInput(conf);
+        conf.type = 'GET';
+        conf = this._getOptions(conf);
+        return this.processXHR(conf);
     }
 
-    post(options = {}, data) {
-        options = BEApi.processInput(options);
-        options.data = data ? _extend(options.data || {}, data) : options.data;
-        options.type = 'POST';
-        options = this._getOptions(options);
-        return this.processXHR(options);
+    post(conf = {}, data) {
+        conf = processInput(conf);
+        conf.data = data ? _extend(conf.data || {}, data) : conf.data;
+        conf.type = 'POST';
+        conf = this._getOptions(conf);
+        return this.processXHR(conf);
     }
 
-    put(options = {}, data) {
-        options = BEApi.processInput(options);
-        options.data = data ? _extend(options.data || {}, data) : options.data;
-        options.type = 'PUT';
-        options = this._getOptions(options);
-        return this.processXHR(options);
+    put(conf = {}, data) {
+        conf = processInput(conf);
+        conf.data = data ? _extend(conf.data || {}, data) : conf.data;
+        conf.type = 'PUT';
+        conf = this._getOptions(conf);
+        return this.processXHR(conf);
     }
 
-    delete(options = {}) {
-        options = BEApi.processInput(options);
-        options.type = 'DELETE';
-        options = this._getOptions(options);
-        return this.processXHR(options);
+    delete(conf = {}) {
+        conf = processInput(conf);
+        conf.type = 'DELETE';
+        conf = this._getOptions(conf);
+        return this.processXHR(conf);
     }
 
-	processAuth(options = {}) {
-        options.url = 'auth';
+	processAuth(conf = {}) {
+        conf.url = 'auth';
         var self = this,
 			storage = BEApi.storage,
-			opt = this.options,
-			promise = this.post(options);
+			opt = this.conf,
+			promise = this.post(conf);
         promise.then(function(res) {
             if (res && res.data && res.data.access_token) {
                 storage.setItem(opt.accessTokenKey, res.data.access_token);
@@ -139,19 +201,19 @@ export class BEApi {
     }
 
 	auth(user, pwd) {
-        var options = {
+        var conf = {
             data: {
                 username: user,
                 password: pwd
             }
         }
-        return this.processAuth(options);
+        return this.processAuth(conf);
     }
 
     refreshToken() {
 		var storage = BEApi.storage,
-			opt = this.options,
-        	options = {
+			opt = this.conf,
+        	conf = {
 	            data: {
 	                grant_type: 'refresh_token',
 	                refresh_token: this.getRefreshToken(),
@@ -159,12 +221,12 @@ export class BEApi {
 	        }
         storage.removeItem(opt.accessTokenKey);
         storage.removeItem(opt.accessTokenExpireDate);
-        return this.processAuth(options);
+        return this.processAuth(conf);
     }
 
     logout() {
 		var storage = BEApi.storage,
-			opt = this.options,
+			opt = this.conf,
         	promise = this.delete({
                 url: 'auth/' + this.getRefreshToken()
             });
@@ -181,15 +243,15 @@ export class BEApi {
     }
 
     getAccessToken() {
-        return BEApi.storage.getItem(this.options.accessTokenKey);
+        return BEApi.storage.getItem(this.conf.accessTokenKey);
     }
 
     getRefreshToken() {
-        return BEApi.storage.getItem(this.options.refreshTokenKey);
+        return BEApi.storage.getItem(this.conf.refreshTokenKey);
     }
 
     getAccessTokenExpireDate() {
-        var data = BEApi.storage.getItem(this.options.accessTokenExpireDate);
+        var data = BEApi.storage.getItem(this.conf.accessTokenExpireDate);
         if (data) {
             data = parseInt(data);
             return new Date(data);
@@ -200,19 +262,10 @@ export class BEApi {
         return new Date() >= this.getAccessTokenExpireDate();
     }
 
-	query() {
-		return new BEApiChain(this);
+	static extend(method, fn) {
+		if (typeof fn == 'function' && typeof BEApi.prototype[method] == 'undefined') {
+			BEApi.prototype[method] = fn;
+		}
 	}
-
-	object(id) {
-		return this.query().objects(id);
-	}
-
-	static processInput(options) {
-        if (typeof options == 'string') {
-            options = { url: options };
-        }
-        return options;
-    }
 
 }

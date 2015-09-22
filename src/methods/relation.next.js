@@ -1,6 +1,6 @@
-import { BEApiChain, BEApiChainMethod } from '../chain.next.js';
+import { BEApiQueue, BEApiQueueMethod } from '../beapi.queue.next.js';
 
-class BEApiChainRelation extends BEApiChainMethod {
+class BEApiQueueRelation extends BEApiQueueMethod {
 
 	constructor(relName) {
 		super({
@@ -23,11 +23,12 @@ class BEApiChainRelation extends BEApiChainMethod {
 		var self = this;
 		return new Promise(function (resolve, reject) {
 			scope['relations'] = scope['relations'] || {};
-			scope['relations'][self.options.relName] = res.data.objects;
+			scope['relations'][self.options.relName] = scope['relations'][self.options.relName] || {};
+			scope['relations'][self.options.relName].objects = res.data.objects;
 			resolve(scope);
 		});
 	}
 
 }
 
-BEApiChain.register('relation', BEApiChainRelation);
+BEApiQueue.register('relation', BEApiQueueRelation);

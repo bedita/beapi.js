@@ -1,6 +1,6 @@
-import { BEApiChain, BEApiChainMethod } from '../chain.next.js';
+import { BEApiQueue, BEApiQueueMethod } from '../beapi.queue.next.js';
 
-class BEApiChainObjects extends BEApiChainMethod {
+class BEApiQueueObjects extends BEApiQueueMethod {
 
 	constructor(id, type) {
 		super({
@@ -31,4 +31,4 @@ class BEApiChainObjects extends BEApiChainMethod {
 
 }
 
-BEApiChain.register('objects', BEApiChainObjects);
+BEApiQueue.register('objects', BEApiQueueObjects);

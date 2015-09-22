@@ -14,9 +14,9 @@ Manage BEdita API calls on your javascript client using this tiny library in you
 - Via download and reference:
 	- Download [beapi.js](https://github.com/bedita/beapi.js/archive/master.zip)
 	- Include in your app
-			
+
 			<script type="text/javascript" src="path/to/beapi.js"></script>
-			
+
 
 ### Promise Polyfill
 
@@ -26,24 +26,24 @@ beapi.js uses the new standard [Promise](https://developer.mozilla.org/it/docs/W
 
 **beapi.js** is based on the standard `XMLHttpRequest`, so it is not compatible (yet) with IE8 and IE9.
 
-BTW, if you are using jQuery or any other library with a built-in ajax system, you can replace the `beapi.xhr` function with the one you prefer:
+BTW, if you are using jQuery or any other library with a built-in ajax system, you can replace the `BEApi.xhr` function with the one you prefer:
 
 ```javascript
-beapi.xhr = $.ajax;
+BEApi.xhr = $.ajax;
 ```
 or, if you are using Angular:
 
 ```javascript
 .service('$beapi', ['$http', function($http) {
-	beapi.xhr = $http;
-	return new beapi();
+	BEApi.xhr = $http;
+	return new BEApi();
 }])
 ```
 
 Right now, **beapi.js** stores `access_token`, `refresh_token` and `access_token_expire_date` in the browser `localStorage` or using node `fs`. If your project needs to support browsers without the `localStorage` interface, or if you want to use other stores, you can replace `beapi.storage` with another `Object` with the same interface.
 
 
-## beapi.js generic methods
+## BEApi.js generic methods
 
 ### .get(*url*|*options*)
 
@@ -51,7 +51,7 @@ Generic GET call.
 
 Accepts:
 
-- `String` *url*: the api endpoint 
+- `String` *url*: the api endpoint
 - **or** `Object` *options*: an options builder compatible object
 
 Returns a `Promise`.
@@ -62,7 +62,7 @@ Generic POST call.
 
 Accepts:
 
-- `String` *url*: the api endpoint 
+- `String` *url*: the api endpoint
 - **or** `Object` *options*: an options builder compatible object
 - [optional] `Object` *data*: the data body of the POST call. If *options.data* is already defined, *data* will be merge on it.
 
@@ -74,7 +74,7 @@ Generic PUT call.
 
 Accepts:
 
-- `String` *url*: the api endpoint 
+- `String` *url*: the api endpoint
 - **or** `Object` *options*: an options builder compatible object
 - [optional] `Object` *data*: the data body of the PUT call. If *options.data* is already defined, *data* will be merge on it.
 
@@ -86,12 +86,12 @@ Generic DELETE call.
 
 Accepts:
 
-- `String` *url*: the api endpoint 
+- `String` *url*: the api endpoint
 - **or** `Object` *options*: an options builder compatible object
 
 Returns a `Promise`.
 
-## beapi.js auth methods
+## BEApi.js auth methods
 
 ### .auth(*username*, *password*)
 
@@ -140,7 +140,7 @@ Returns a `Promise`.
 
 ### .logout()
 
-Ask to the server to invalidate the `refreshToken` through a POST call and remove `accessToken` and `refreshToken` from the `localStorage`. 
+Ask to the server to invalidate the `refreshToken` through a POST call and remove `accessToken` and `refreshToken` from the `localStorage`.
 
 It automatically passes the `refreshToken` in the POST call.
 
@@ -150,43 +150,74 @@ Returns a `Promise`.
 
 ### BEObject
 
-When a request for a BEdita object is performed using the `beapi.objects` method, the response is used to build an instance of a `BEObject`. The structure of this object is close to the API response, but with some special changes:
+The `BEObject` model is useful for fetch and manage object entities.
 
-- `relations.*` and `children` become an instance of the [`BECollection`](#BECollection) object.
-- a `section` field as filtered alias to `children`
-- a `parent`, a `BEObject` instance representing the parent object (if `parent_id` field is defined). 
+*Constructor:*
+
+```js
+new BEObject(objectData, serverData);
+// example
+var obj = new BEObject({ id: 1 }, { baseUrl: 'https://bedita.com/api/latest' });
+```
+
+*Properties:*
+
+- **`parent`**: a `BEObject` instance representing the parent object (if `parent_id` field is defined).
+- **`query`**: a `BEApiQueue` instance representing the current object.
 
 *Methods:*
 
 - **fetch()**: fetch the object data from the server (the object field `id` should be defined)
-- **update(*data*)**: update object data
+- **set(*data*)**: update object data
 - **is(*data*)**: check if an object matches the object data definition.
 
 ### BECollection
 
 An Object representing a Collection of BEdita objects.
 
+*Constructor:*
+
+```js
+new BECollection(objectData, serverData);
+// example
+var listening = new BECollection({ items: [] }, { baseUrl: 'https://bedita.com/api/latest' });
+```
+
 *Properties:*
 
 - **items**: an Array of `BEObject`s.
-- **url**: the url used to fetch data.
-- **length**: the length of Collection (could be defferent from `items.length`, if you have not yet fetched data).
+- **length**: the length of Collection (could be defferent from `items.length`, if you have not fetched data yet).
 
 *Methods:*
 
-- **fetch([opt] *url*)**: fetch the objects data from the server (the collection `url` should be defined).
+- **fetch()**: fetch the objects data from the server (the collection `url` should be defined).
 - **forEach(*callback*)**: iterate Collection items.
 - **filter(*filter*)**: get an Array of filtered objects.
 
-## Running Tests
+## Build
 
 ### Prerequisites:
 
 - Install [nodejs](https://nodejs.org/)
-- Install mocha
+- Install [babel](https://babeljs.io)
+
+		npm install babel -g
+
+### Build
+
+```
+npm run build
+```
+
+## Running tests
+
+### Prerequisites:
+
+- Install [nodejs](https://nodejs.org/)
+- Install [mocha](https://mochajs.org/)
 
 		npm install mocha -g
-		
+
 ### Install dependencies
 
 Navigate to the project path and run:
@@ -194,17 +225,17 @@ Navigate to the project path and run:
 ```
 npm install
 ```
-		
+
 ### Configuration
 
-Use `test.json.sample` as footprint for you configuration:
+Use `tests/test.json.sample` as footprint for you configuration:
 
 ```
-mv test.json.sample test.json
+mv tests/test.json.sample tests/test.json
 ```
 
 ### Run the tests
 
 ```
-npm test
+npm run tests
 ```

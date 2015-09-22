@@ -1,4 +1,6 @@
-export class BEApiChain {
+import { BEApi } from './beapi.next.js';
+
+export class BEApiQueue {
 
 	get _queue() {
 		return this.__queue || [];
@@ -10,15 +12,27 @@ export class BEApiChain {
 		}
 	}
 
-	constructor(BEApiInstance) {
-		if (!BEApiInstance || !BEApiInstance.constructor || !BEApiInstance.constructor.name == 'BEApi') {
-			throw 'No BEApi instance provided.'
+	constructor(conf) {
+		var that = this;
+		if (typeof conf === 'string') {
+			this.conf = BEApiRegistry.getInstance(conf);
+		} else if (typeof conf === 'object') {
+			this.conf = conf;
+		} else {
+			throw 'No BEApi configuration provided.'
 		}
-		this._beapi = BEApiInstance;
+		this._promise = new Promise(function (resolve, reject) {
+			that._resolver = resolve;
+			that._rejecter = reject;
+		});
 		this._reset();
 	}
 
 	_add(task) {
+		task.push(new Promise(function (resolve, reject) {
+			task.push(resolve);
+			task.push(reject);
+		}));
 		this._queue.push(task);
 	}
 
@@ -29,28 +43,34 @@ export class BEApiChain {
 	exec() {
 		var self = this,
 			queue = this._queue,
-			beapi = this._beapi,
+			beapi = new BEApi(this.conf),
 			scope;
-		return new Promise(function (resolve, reject) {
-			if (queue.length == 0) return resolve(scope);
 
+		if (queue.length == 0) {
+			self._resolver(scope);
+		} else {
 			function _exec(queue, index) {
 				index = index || 0;
 				if (index == queue.length) {
-					resolve(scope);
+					return self._resolver(scope);
 				}
 				var task = queue[index],
 					method = task[0],
 					args = task[1],
-					config = new BEApiChain.tasks[method](...args);
+					resolver = task[2],
+					rejecter = task[3],
+					promise = task[4],
+					config = new BEApiQueue.tasks[method](...args);
 
 				var onLoad = function (res) {
 					config.validate(res).then(function () {
 						config.transform(scope, res).then(function (obj) {
 							scope = obj;
+							resolver(scope);
 							_exec(queue, index + 1);
 						}, function (err) {
-							reject(err);
+							rejecter(scope);
+							self._rejecter(err);
 						});
 					}, function (err) {
 						reject(err);
@@ -63,23 +83,36 @@ export class BEApiChain {
 			}
 
 			_exec(queue);
-		});
+		}
+		return this._promise;
 	}
 
 	get() {
 		return this.exec();
 	}
 
+	then(done, fail) {
+		if (this._queue.length) {
+			return this._queue[this._queue.length - 1][4].then(done, fail);
+		}
+	}
+
+	all(done, fail) {
+		if (this._promise) {
+			return this._promise.then(done, fail);
+		}
+	}
+
 	static register(taskName, def) {
-		if (taskName && BEApiChain._reserved.indexOf(taskName) !== -1) {
+		if (taskName && BEApiQueue._reserved.indexOf(taskName) !== -1) {
 			throw 'Reserved method';
 		}
 
-		BEApiChain.tasks = BEApiChain.tasks || {};
-		BEApiChain.tasks[taskName] = def;
+		BEApiQueue.tasks = BEApiQueue.tasks || {};
+		BEApiQueue.tasks[taskName] = def;
 
 		(function (method) {
-			BEApiChain.prototype[method] = function (...args) {
+			BEApiQueue.prototype[method] = function (...args) {
 				this._add([method, args]);
 				return this;
 			}
@@ -91,7 +124,7 @@ export class BEApiChain {
 	}
 }
 
-export class BEApiChainMethod {
+export class BEApiQueueMethod {
 
 	get type() {
 		return 'get';
