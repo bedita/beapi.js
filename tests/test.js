@@ -117,13 +117,19 @@ describe('beapi.js', function() {
             expect(hasLogout).to.equal(true);
         });
     });
-    describe('get an object', function() {
+	describe('get an object', function() {
         var object = null;
 		this.timeout(5000);
 
         beforeEach(function(done) {
-			System.import('./src/object.next.js', {}).then(function (mod) {
-	            var p = new mod.BEObject({ id: conf.publication_id }, beapi.conf);
+			Promise.all(
+        		['./src/collection.next.js', './src/object.next.js'].map(function(x) {
+					return System.import(x)
+				})
+			).then(function (modules) {
+				BECollection = modules[0].BECollection;
+				BEObject = modules[1].BEObject;
+	            var p = new BEObject({ id: conf.publication_id }, beapi.conf);
 				var q = p.query()
 						.relation('attach')
 						.relation('poster');
@@ -142,6 +148,35 @@ describe('beapi.js', function() {
             expect(response).to.not.equal(null);
             expect(typeof response.id).to.equal('number');
             expect(typeof response.nickname).to.equal('string');
+        });
+    });
+	describe('get a collection', function() {
+        var collection = null;
+		this.timeout(5000);
+
+        beforeEach(function(done) {
+			Promise.all(
+        		['./src/collection.next.js', './src/object.next.js'].map(function(x) {
+					return System.import(x)
+				})
+			).then(function (modules) {
+				BECollection = modules[0].BECollection;
+				BEObject = modules[1].BEObject;
+	            collection = new BECollection({ url: 'objects' }, beapi.conf);
+				collection.fetch().then(function(obj) {
+					response = obj;
+	                done();
+	            }, function(err) {
+					console.log('fail', err);
+	                done();
+	            });
+			}, done);
+        });
+
+        it('it should return a be object', function() {
+            expect(collection).to.not.equal(null);
+            expect(collection.length).to.be.above(0);
+            expect(collection[0].constructor.name).to.equal('BEObject');
         });
     });
 });

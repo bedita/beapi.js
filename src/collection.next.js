@@ -1,10 +1,12 @@
 import { BEModel } from './model.next.js';
+import { BEApi } from './beapi.next.js';
+import { BEApiQueue } from './beapi.queue.next.js';
+import './methods/all.next.js';
 
 export class BECollection extends BEModel {
 
 	constructor(options = {}, conf = {}) {
 		super(conf);
-		var that = this;
         if (options.alias) {
             this.alias = options.alias;
 			if (options.filter) {
@@ -17,14 +19,19 @@ export class BECollection extends BEModel {
 		}
         this.url = options.url;
         this.length = options.count || this.items.length || 0;
+		this.update();
+    }
+
+	update() {
+		var that = this;
 		this.forEach(function (obj, index) {
 			if (!(obj instanceof BEObject)) {
 				obj = new BEObject(obj, that.conf);
+				that.items[index] = obj;
 			}
-			that.items[index] = obj;
 			that[index] = obj;
 		});
-    }
+	}
 
     fetch(url) {
         var that = this;
@@ -33,6 +40,10 @@ export class BECollection extends BEModel {
                 if (that.alias) {
                     return that.alias.fetch(that.url || url || undefined);
                 }
+				var oldLength = that.length;
+				for (let z = 0; z < oldLength; z++) {
+					delete that[z];
+				}
 				var beapi = new BEApi(that.conf);
                 beapi.get(that.url || url).then(function(res) {
                     if (res && res.data && res.data.objects) {
@@ -42,6 +53,7 @@ export class BECollection extends BEModel {
                         }
                         that.items.slice(res.data.objects.length);
                         that.length = that.items.length;
+						that.update();
                     }
                     resolve.apply(this, arguments);
                 }, function() {

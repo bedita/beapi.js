@@ -94,6 +94,8 @@ export class BEApiQueue {
 	then(done, fail) {
 		if (this._queue.length) {
 			return this._queue[this._queue.length - 1][4].then(done, fail);
+		} else {
+			return this.all(done, fail);
 		}
 	}
 

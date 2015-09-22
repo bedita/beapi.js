@@ -40,7 +40,6 @@ var BECollection = (function (_BEModel) {
         _classCallCheck(this, BECollection);
 
         _get(Object.getPrototypeOf(BECollection.prototype), 'constructor', this).call(this, conf);
-        var that = this;
         if (options.alias) {
             this.alias = options.alias;
             if (options.filter) {
@@ -53,16 +52,22 @@ var BECollection = (function (_BEModel) {
         }
         this.url = options.url;
         this.length = options.count || this.items.length || 0;
-        this.forEach(function (obj, index) {
-            if (!(obj instanceof BEObject)) {
-                obj = new BEObject(obj, that.conf);
-            }
-            that.items[index] = obj;
-            that[index] = obj;
-        });
+        this.update();
     }
 
     _createClass(BECollection, [{
+        key: 'update',
+        value: function update() {
+            var that = this;
+            this.forEach(function (obj, index) {
+                if (!(obj instanceof BEObject)) {
+                    obj = new BEObject(obj, that.conf);
+                    that.items[index] = obj;
+                }
+                that[index] = obj;
+            });
+        }
+    }, {
         key: 'fetch',
         value: function fetch(url) {
             var that = this;
@@ -70,6 +75,10 @@ var BECollection = (function (_BEModel) {
                 if (that.url || url) {
                     if (that.alias) {
                         return that.alias.fetch(that.url || url || undefined);
+                    }
+                    var oldLength = that.length;
+                    for (var z = 0; z < oldLength; z++) {
+                        delete that[z];
                     }
                     var beapi = new BEApi(that.conf);
                     beapi.get(that.url || url).then(function (res) {
@@ -80,6 +89,7 @@ var BECollection = (function (_BEModel) {
                             }
                             that.items.slice(res.data.objects.length);
                             that.length = that.items.length;
+                            that.update();
                         }
                         resolve.apply(this, arguments);
                     }, function () {
@@ -803,6 +813,8 @@ var BEApiQueue = (function () {
 		value: function then(done, fail) {
 			if (this._queue.length) {
 				return this._queue[this._queue.length - 1][4].then(done, fail);
+			} else {
+				return this.all(done, fail);
 			}
 		}
 	}, {

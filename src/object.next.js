@@ -1,5 +1,5 @@
 import { BEModel } from './model.next.js';
-import { BECollection } from './collection.next.js';
+import { BEApi } from './beapi.next.js';
 import { BEApiQueue } from './beapi.queue.next.js';
 import './methods/all.next.js';
 
