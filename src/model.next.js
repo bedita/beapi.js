@@ -9,3 +9,16 @@ export class BEModel {
 	}
 
 }
+
+export class BEArray extends Array {
+
+	constructor(items, conf) {
+		super(items);
+		this.conf = conf;
+	}
+
+	config(conf) {
+		this.conf = conf;
+	}
+
+}

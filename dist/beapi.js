@@ -1,6 +1,10 @@
 "use strict";
 
+var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; continue _function; } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -20,6 +24,26 @@ var BEModel = (function () {
 
 	return BEModel;
 })();
+
+var BEArray = (function (_Array) {
+	_inherits(BEArray, _Array);
+
+	function BEArray(items, conf) {
+		_classCallCheck(this, BEArray);
+
+		_get(Object.getPrototypeOf(BEArray.prototype), "constructor", this).call(this, items);
+		this.conf = conf;
+	}
+
+	_createClass(BEArray, [{
+		key: "config",
+		value: function config(conf) {
+			this.conf = conf;
+		}
+	}]);
+
+	return BEArray;
+})(Array);
 'use strict';
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
@@ -30,103 +54,82 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var BECollection = (function (_BEModel) {
-    _inherits(BECollection, _BEModel);
+var BECollection = (function (_BEArray) {
+	_inherits(BECollection, _BEArray);
 
-    function BECollection() {
-        var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-        var conf = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+	function BECollection() {
+		var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+		var conf = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
-        _classCallCheck(this, BECollection);
+		_classCallCheck(this, BECollection);
 
-        _get(Object.getPrototypeOf(BECollection.prototype), 'constructor', this).call(this, conf);
-        if (options.alias) {
-            this.alias = options.alias;
-            if (options.filter) {
-                this.items = options.alias.filter(options.filter) || [];
-            } else {
-                this.items = options.alias.items || [];
-            }
-        } else {
-            this.items = options.items || options.objects || [];
-        }
-        this.url = options.url;
-        this.length = options.count || this.items.length || 0;
-        this.update();
-    }
+		_get(Object.getPrototypeOf(BECollection.prototype), 'constructor', this).call(this, [], conf);
+		var items;
+		if (options.alias) {
+			this.alias = options.alias;
+			if (options.filter) {
+				items = options.alias.filter(options.filter) || [];
+			} else {
+				items = options.alias.items || [];
+			}
+		} else {
+			items = options.items || options.objects || [];
+		}
+		this.url = options.url;
+		for (var i = 0; i < items.length; i++) {
+			this.push(items[i]);
+		}
+		if (items.length < options.count) {
+			this.push({});
+		}
+	}
 
-    _createClass(BECollection, [{
-        key: 'update',
-        value: function update() {
-            var that = this;
-            this.forEach(function (obj, index) {
-                if (!(obj instanceof BEObject)) {
-                    obj = new BEObject(obj, that.conf);
-                    that.items[index] = obj;
-                }
-                that[index] = obj;
-            });
-        }
-    }, {
-        key: 'fetch',
-        value: function fetch(url) {
-            var that = this;
-            return new Promise(function (resolve, reject) {
-                if (that.url || url) {
-                    if (that.alias) {
-                        return that.alias.fetch(that.url || url || undefined);
-                    }
-                    var oldLength = that.length;
-                    for (var z = 0; z < oldLength; z++) {
-                        delete that[z];
-                    }
-                    var beapi = new BEApi(that.conf);
-                    beapi.get(that.url || url).then(function (res) {
-                        if (res && res.data && res.data.objects) {
-                            for (var i = 0; i < res.data.objects.length; i++) {
-                                var obj = res.data.objects[i];
-                                that.items[i] = new BEObject(obj, that.conf);
-                            }
-                            that.items.slice(res.data.objects.length);
-                            that.length = that.items.length;
-                            that.update();
-                        }
-                        resolve.apply(this, arguments);
-                    }, function () {
-                        reject.apply(this, arguments);
-                    });
-                } else {
-                    reject();
-                }
-            });
-        }
-    }, {
-        key: 'forEach',
-        value: function forEach(callback) {
-            if (typeof callback !== 'function') {
-                return;
-            }
-            var that = this;
-            for (var i = 0, len = this.length; i < len; i++) {
-                callback.call(that, that.item(i), i);
-            }
-        }
-    }, {
-        key: 'item',
-        value: function item(index) {
-            return this.items[index];
-        }
-    }, {
-        key: 'filter',
-        value: function filter(f) {
-            return this.items.filter(function (item) {
-                return item.is(f);
-            });
-        }
-    }]);
+	_createClass(BECollection, [{
+		key: 'push',
+		value: function push(obj) {
+			if (!(obj instanceof BEObject)) {
+				obj = new BEObject(obj, this.conf);
+			}
+			Array.prototype.push.call(this, obj);
+		}
+	}, {
+		key: 'fetch',
+		value: function fetch(url) {
+			var that = this;
+			return new Promise(function (resolve, reject) {
+				if (that.url || url) {
+					if (that.alias) {
+						return that.alias.fetch(that.url || url || undefined);
+					}
+					that.splice(0, that.length);
+					var beapi = new BEApi(that.conf);
+					beapi.get(that.url || url).then(function (res) {
+						if (res && res.data && res.data.objects) {
+							for (var i = 0; i < res.data.objects.length; i++) {
+								var obj = res.data.objects[i];
+								that.push(obj);
+							}
+						}
+						resolve.apply(this, arguments);
+					}, function () {
+						reject.apply(this, arguments);
+					});
+				} else {
+					reject();
+				}
+			});
+		}
+	}, {
+		key: 'filter',
+		value: function filter(f) {
+			return Array.prototype.filter.call(this, function (item) {
+				return item.is(f);
+			});
+		}
+	}]);
 
-    return BECollection;
-})(BEModel);
+	return BECollection;
+})(BEArray);
 'use strict';
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();

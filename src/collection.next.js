@@ -1,36 +1,37 @@
-import { BEModel } from './model.next.js';
+import { BEArray } from './model.next.js';
 import { BEApi } from './beapi.next.js';
 import { BEApiQueue } from './beapi.queue.next.js';
 import './methods/all.next.js';
 
-export class BECollection extends BEModel {
+export class BECollection extends BEArray {
 
 	constructor(options = {}, conf = {}) {
-		super(conf);
+		super([], conf);
+		var items;
         if (options.alias) {
             this.alias = options.alias;
 			if (options.filter) {
-				this.items = options.alias.filter(options.filter) || [];
+				items = options.alias.filter(options.filter) || [];
 			} else {
-				this.items = options.alias.items || [];
+				items = options.alias.items || [];
 			}
         } else {
-			this.items = options.items || options.objects || [];
+			items = options.items || options.objects || [];
 		}
         this.url = options.url;
-        this.length = options.count || this.items.length || 0;
-		this.update();
+		for (let i = 0; i < items.length; i++) {
+			this.push(items[i]);
+		}
+		if (items.length < options.count) {
+			this.push({});
+		}
     }
 
-	update() {
-		var that = this;
-		this.forEach(function (obj, index) {
-			if (!(obj instanceof BEObject)) {
-				obj = new BEObject(obj, that.conf);
-				that.items[index] = obj;
-			}
-			that[index] = obj;
-		});
+	push(obj) {
+		if (!(obj instanceof BEObject)) {
+			obj = new BEObject(obj, this.conf);
+		}
+		Array.prototype.push.call(this, obj);
 	}
 
     fetch(url) {
@@ -40,20 +41,14 @@ export class BECollection extends BEModel {
                 if (that.alias) {
                     return that.alias.fetch(that.url || url || undefined);
                 }
-				var oldLength = that.length;
-				for (let z = 0; z < oldLength; z++) {
-					delete that[z];
-				}
+				that.splice(0, that.length);
 				var beapi = new BEApi(that.conf);
                 beapi.get(that.url || url).then(function(res) {
                     if (res && res.data && res.data.objects) {
                         for (var i = 0; i < res.data.objects.length; i++) {
                             var obj = res.data.objects[i];
-                            that.items[i] = new BEObject(obj, that.conf);
+							that.push(obj);
                         }
-                        that.items.slice(res.data.objects.length);
-                        that.length = that.items.length;
-						that.update();
                     }
                     resolve.apply(this, arguments);
                 }, function() {
@@ -65,24 +60,9 @@ export class BECollection extends BEModel {
         });
     }
 
-    forEach(callback) {
-        if (typeof callback !== 'function') {
-            return;
-        }
-        var that = this;
-        for (let i = 0, len = this.length; i < len; i++) {
-            callback.call(that, that.item(i), i);
-        }
-    }
-
-	item(index) {
-		return this.items[index];
+	filter(f) {
+		return Array.prototype.filter.call(this, function(item) {
+			return item.is(f);
+		});
 	}
-
-    filter(f) {
-        return this.items.filter(function(item) {
-            return item.is(f);
-        });
-    }
-
 }
