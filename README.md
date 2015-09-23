@@ -209,6 +209,12 @@ var listening = new BECollection({ items: [] }, { baseUrl: 'https://bedita.com/a
 npm run build
 ```
 
+### Release
+
+```
+npm run release X.X.X
+```
+
 ## Running tests
 
 ### Prerequisites:

@@ -137,7 +137,6 @@ describe('beapi.js', function() {
 						.relation('poster');
 
 				q.get().then(function(obj) {
-					console.log(obj);
 					response = obj;
 	                done();
 	            }, function(err) {

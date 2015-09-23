@@ -1,32 +1,33 @@
 {
-	"name": "beapi.js",
-	"version": "0.1.1",
-	"description": "Manage BEdita API calls on your javascript client",
-	"main": "src/beapi.js",
-	"scripts": {
-		"build": "mkdir -p dist && babel --modules ignore --out-file dist/beapi.js < src/model.next.js src/model.next.js src/collection.next.js src/object.next.js src/xhr.next.js src/beapi.next.js src/beapi.queue.next.js src/methods/* --source-maps",
-		"tests": "mocha tests/test.js"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/bedita/beapi.js"
-	},
-	"keywords": [
-		"bedita",
-		"api"
-	],
-	"author": "BEdita Team",
-	"license": "LGPL",
-	"bugs": {
-		"url": "https://github.com/bedita/beapi.js/issues"
-	},
-	"homepage": "https://github.com/bedita/beapi.js",
-	"dependencies": {
-		"es6-promise": "^2.3.0",
-		"node-localstorage": "^0.5.0",
-		"xmlhttprequest": "^1.7.0"
-	},
-	"devDependencies": {
-		"chai": "^2.3.0"
-	}
+    "name": "beapi.js",
+    "version": "0.2.0",
+    "description": "Manage BEdita API calls on your javascript client",
+    "main": "src/beapi.js",
+    "scripts": {
+        "build": "mkdir -p dist && babel --modules ignore --out-file dist/beapi.js < src/model.next.js src/model.next.js src/collection.next.js src/object.next.js src/xhr.next.js src/beapi.next.js src/beapi.queue.next.js src/methods/* --source-maps",
+        "tests": "mocha tests/test.js",
+        "release": "npm run tests && npm run build && node release.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/bedita/beapi.js"
+    },
+    "keywords": [
+        "bedita",
+        "api"
+    ],
+    "author": "BEdita Team",
+    "license": "LGPL",
+    "bugs": {
+        "url": "https://github.com/bedita/beapi.js/issues"
+    },
+    "homepage": "https://github.com/bedita/beapi.js",
+    "dependencies": {
+        "es6-promise": "^2.3.0",
+        "node-localstorage": "^0.5.0",
+        "xmlhttprequest": "^1.7.0"
+    },
+    "devDependencies": {
+        "chai": "^2.3.0"
+    }
 }

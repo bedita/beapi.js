@@ -1,25 +1,25 @@
 {
-  "name": "beapi.js",
-  "version": "0.1.1",
-  "authors": [
-    "BEdita Team <info@bedita.com>"
-  ],
-  "description": "Manage BEdita API calls on your javascript client",
-  "main": "dist/beapi.js",
-  "keywords": [
-    "bedita",
-    "api"
-  ],
-  "license": "LGP",
-  "homepage": "https://github.com/bedita/beapi.js",
-  "ignore": [
-    "**/.*",
-    "node_modules",
-    "bower_components",
-    "test",
-    "tests"
-  ],
-  "dependencies": {
-    "es6-promise": "~2.2.0"
-  }
+    "name": "beapi.js",
+    "version": "0.2.0",
+    "authors": [
+        "BEdita Team <info@bedita.com>"
+    ],
+    "description": "Manage BEdita API calls on your javascript client",
+    "main": "dist/beapi.js",
+    "keywords": [
+        "bedita",
+        "api"
+    ],
+    "license": "LGP",
+    "homepage": "https://github.com/bedita/beapi.js",
+    "ignore": [
+        "**/.*",
+        "node_modules",
+        "bower_components",
+        "test",
+        "tests"
+    ],
+    "dependencies": {
+        "es6-promise": "~2.2.0"
+    }
 }
