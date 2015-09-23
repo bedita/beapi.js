@@ -129,7 +129,7 @@ var BECollection = (function (_BEArray) {
 	}, {
 		key: 'toArray',
 		value: function toArray() {
-			return Array.prototype.splice.call(this, 0);
+			return Array.prototype.slice.call(this, 0);
 		}
 	}]);
 

@@ -67,6 +67,6 @@ export class BECollection extends BEArray {
 	}
 
 	toArray() {
-		return Array.prototype.splice.call(this, 0);
+		return Array.prototype.slice.call(this, 0);
 	}
 }
