@@ -126,6 +126,11 @@ var BECollection = (function (_BEArray) {
 				return item.is(f);
 			});
 		}
+	}, {
+		key: 'toArray',
+		value: function toArray() {
+			return Array.prototype.splice.call(this, 0);
+		}
 	}]);
 
 	return BECollection;

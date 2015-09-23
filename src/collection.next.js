@@ -65,4 +65,8 @@ export class BECollection extends BEArray {
 			return item.is(f);
 		});
 	}
+
+	toArray() {
+		return Array.prototype.splice.call(this, 0);
+	}
 }
