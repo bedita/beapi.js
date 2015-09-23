@@ -485,7 +485,7 @@ var BEApi = (function () {
           accessToken = res.accessToken;
 
       if (/^([\w\-]+:)?\/{2,3}/.test(url)) {
-        if (url.indexOf(conf.baseUrl) !== 0) {
+        if (url.indexOf(res.baseUrl) !== 0) {
           throw 'Invalid url';
         }
       } else {
