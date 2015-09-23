@@ -9,9 +9,16 @@ class BEApiQueuePoster extends BEApiQueueMethod {
 	input(scope) {
 		var self = this;
 		return new Promise(function (resolve) {
+			var suffix = '';
+			if (self.options) {
+				suffix = '?';
+				for (var k in self.options) {
+					suffix += k + '=' + self.options[k];
+				}
+			}
 			resolve([
 				{
-					url: 'poster/' + scope.id
+					url: 'poster/' + scope.id + suffix
 				}
 			]);
 		})
