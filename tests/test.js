@@ -91,7 +91,6 @@ describe('beapi.js', function() {
                         newAccessToken = beapi.getAccessToken();
                         done();
                     }, function(res) {
-                        console.log(res);
                         done();
                     });
                 }, 1500);
@@ -117,9 +116,11 @@ describe('beapi.js', function() {
             expect(hasLogout).to.equal(true);
         });
     });
-	describe('get an object', function() {
-        var object = null;
-		this.timeout(5000);
+	describe('get an object and save it', function() {
+        var object = null,
+			beforeUpdate = 0,
+			afterUpdate = 0;
+		this.timeout(10000);
 
         beforeEach(function(done) {
 			Promise.all(
@@ -129,20 +130,27 @@ describe('beapi.js', function() {
 			).then(function (modules) {
 				BECollection = modules[0].BECollection;
 				BEObject = modules[1].BEObject;
-	            var p = new BEObject({ id: conf.publication_id }, {
-                    baseUrl: conf.baseUrl
-                });
-				var q = p.query()
-						.relation('attach')
-						.relation('poster');
 
-				q.get().then(function(obj) {
-					response = obj;
-	                done();
-	            }, function(err) {
-					console.log('fail', err);
-	                done();
-	            });
+				beapi.auth(conf.auth.username, conf.auth.password).then(function () {
+		            var p = new BEObject({ id: conf.publication_id }, beapi.conf);
+					var q = p.query()
+							.relation('attach')
+							.relation('poster');
+					q.get().then(function(obj) {
+						beforeUpdate = afterUpdate = obj.modified;
+						response = obj;
+						p.save().then(function () {
+							afterUpdate = obj.modified;
+		                	done();
+						}, function (err) {
+							console.log('fail', err);
+			                done();
+						});
+		            }, function(err) {
+						console.log('fail', err);
+		                done();
+		            });
+				});
 			}, done);
         });
 
@@ -150,6 +158,7 @@ describe('beapi.js', function() {
             expect(response).to.not.equal(null);
             expect(typeof response.id).to.equal('number');
             expect(typeof response.nickname).to.equal('string');
+			expect(afterUpdate).to.not.equal(beforeUpdate);
         });
     });
 	describe('get a collection', function() {

@@ -139,7 +139,7 @@ var BECollection = (function (_BEArray) {
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-var _get = function get(_x3, _x4, _x5) { var _again = true; _function: while (_again) { var object = _x3, property = _x4, receiver = _x5; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x3 = parent; _x4 = property; _x5 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+var _get = function get(_x4, _x5, _x6) { var _again = true; _function: while (_again) { var object = _x4, property = _x5, receiver = _x6; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x4 = parent; _x5 = property; _x6 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
@@ -176,6 +176,30 @@ var BEObject = (function (_BEModel) {
                 } else {
                     reject();
                 }
+            });
+        }
+    }, {
+        key: 'save',
+        value: function save() {
+            var data = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+            var that = this;
+            this.set(data);
+            var dataToSend = this.toJSON();
+            return new Promise(function (resolve, reject) {
+                var promise = new BEApi(that.conf).post('objects', {
+                    data: dataToSend
+                });
+                promise.then(function (res) {
+                    if (res && res.data && res.data.object) {
+                        that.set(res.data.object);
+                        resolve(res);
+                    } else {
+                        reject(res);
+                    }
+                }, function (err) {
+                    reject(err);
+                });
             });
         }
     }, {
@@ -267,6 +291,18 @@ var BEObject = (function (_BEModel) {
                 that.set(scope);
             });
             return queue;
+        }
+    }, {
+        key: 'toJSON',
+        value: function toJSON() {
+            var res = {},
+                data = this;
+            for (var k in data) {
+                if (k !== 'conf' && typeof data[k] !== 'function') {
+                    res[k] = data[k];
+                }
+            }
+            return res;
         }
     }]);
 
@@ -377,325 +413,550 @@ var _createClass = (function () { function defineProperties(target, props) { for
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-function processInput() {
-  var conf = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+/**
+ * Convenience method to process request arguments
+ * - If the argument is String typed, set it as url attribute of a set of options
+ * @private
+ * @param {String|Object} conf The request arguments.
+ * @return {Object} A valid set of options for the request.
+ */
+function _processInput() {
+	var conf = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-  if (conf) {
-    if (typeof conf == 'string') {
-      conf = { url: conf };
-    }
-    return conf;
-  }
+	if (conf) {
+		if (typeof conf == 'string') {
+			conf = { url: conf };
+		}
+		return conf;
+	}
 }
 
+/**
+ * Convenience method to extend a JavaScript Object
+ * @private
+ * @param {Object} res The object to extend.
+ * @param {Object} ...args A list of objects to use to extend the first one.
+ * @return {Object} The extended object.
+ */
+function _extend() {
+	var res = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+	for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+		args[_key - 1] = arguments[_key];
+	}
+
+	for (var i = 0; i < args.length; i++) {
+		var obj = args[i];
+		for (var k in obj) {
+			res[k] = obj[k];
+		}
+	}
+	return res;
+}
+
+/**
+ * A registry of BEApi configuration.
+ * Everywhere, in your JavaScript application, you can use `BEApiRegistry.getInstance(key)` to retrieve a BEApi configration.
+ * Register BEApi configurations is lighter and simpler than register instances.
+ * Use BEApiRegistry to share configuration between models, interfaces and queues.
+ * @class
+ */
+
 var BEApiRegistry = (function () {
-  function BEApiRegistry() {
-    _classCallCheck(this, BEApiRegistry);
-  }
+	function BEApiRegistry() {
+		_classCallCheck(this, BEApiRegistry);
+	}
 
-  _createClass(BEApiRegistry, null, [{
-    key: 'add',
-    value: function add(key) {
-      var conf = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+	/**
+  * Create an interface to communicate with a BEdita API frontend.
+  * @class
+  */
 
-      BEApiRegistry._instances = BEApiRegistry._instances || {};
-      BEApiRegistry._instances[key] = conf;
-    }
-  }, {
-    key: 'getInstance',
-    value: function getInstance(key) {
-      BEApiRegistry._instances = BEApiRegistry._instances || {};
-      if (typeof BEApiRegistry._instances[key] !== 'undefined') {
-        return BEApiRegistry._instances[key];
-      }
-    }
-  }, {
-    key: 'remove',
-    value: function remove(key) {
-      BEApiRegistry._instances = BEApiRegistry._instances || {};
-      if (typeof BEApiRegistry._instances[key] !== 'undefined') {
-        delete BEApiRegistry._instances[key];
-      }
-    }
-  }]);
+	_createClass(BEApiRegistry, null, [{
+		key: 'add',
 
-  return BEApiRegistry;
+		/**
+   * Add a configuration using the provided key.
+   * @param {String} key The key to use to register the configuration.
+   * @param {Object} conf The configuration.
+   */
+		value: function add(key) {
+			var conf = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
+			BEApiRegistry._instances = BEApiRegistry._instances || {};
+			BEApiRegistry._instances[key] = conf;
+		}
+
+		/**
+   * Retrieve a configuration using the provided key.
+   * @param {String} key The key to use to read the configuration.
+   * @return {Object} The configuration.
+   */
+	}, {
+		key: 'getInstance',
+		value: function getInstance(key) {
+			BEApiRegistry._instances = BEApiRegistry._instances || {};
+			if (typeof BEApiRegistry._instances[key] !== 'undefined') {
+				return BEApiRegistry._instances[key];
+			}
+		}
+
+		/**
+   * Remove a configuration using the provided key.
+   * @param {String} key The key to use to remove the configuration.
+   * @return {Boolean} If the configuration exists, return `true` after remotion, otherwise return `false`.
+   */
+	}, {
+		key: 'remove',
+		value: function remove(key) {
+			BEApiRegistry._instances = BEApiRegistry._instances || {};
+			if (typeof BEApiRegistry._instances[key] !== 'undefined') {
+				delete BEApiRegistry._instances[key];
+				return true;
+			}
+			return false;
+		}
+	}]);
+
+	return BEApiRegistry;
 })();
 
 var BEApi = (function () {
-  _createClass(BEApi, null, [{
-    key: 'storage',
-    get: function get() {
-      if (this._storage) {
-        return this._storage;
-      }
-      if ('object' == typeof module && 'object' == typeof module.exports) {
-        var LocalStorage = require('node-localstorage').LocalStorage;
-        return BEApi.storage = new LocalStorage('./beapi');
-      } else if ('undefined' !== typeof localStorage) {
-        return BEApi.storage = window.localStorage;
-      }
-    },
-    set: function set(storage) {
-      this._storage = storage;
-    }
-  }, {
-    key: 'xhr',
-    get: function get() {
-      return BEXhr.xhr;
-    },
-    set: function set(xhr) {
-      BEXhr.xhr = xhr;
-    }
-  }]);
 
-  function BEApi() {
-    var conf = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+	/**
+  * Instantiate a BEApi Object.
+  * @constructor
+  * @param {Object} conf A set of options.
+  */
 
-    _classCallCheck(this, BEApi);
+	function BEApi() {
+		var conf = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-    var opt = {
-      baseUrl: undefined,
-      accessTokenKey: 'be_access_token',
-      refreshTokenKey: 'be_refresh_token',
-      accessTokenExpireDate: 'be_access_token_expire_date'
-    };
+		_classCallCheck(this, BEApi);
 
-    for (var k in conf) {
-      opt[k] = conf[k];
-    }
+		/**
+   * A set of options.
+   * @namespace
+   * @property {String} baseUrl 				The base frontend endpoint.
+   * @property {String} configKey 			The registry key to use to store this BEApi configuration (@see {@link BEApiRegistry}).
+   * @property {String} accessTokenKey 		The storage key to use for Access Token when using auth methods.
+   * @property {String} refreshTokenKey		The storage key to use for Refresh Token when using auth methods.
+   * @property {String} accessTokenExpireDate The storage key to use for Access Token Expire Date when using auth methods.
+   */
+		var opt = {
+			baseUrl: undefined,
+			accessTokenKey: 'be_access_token',
+			refreshTokenKey: 'be_refresh_token',
+			accessTokenExpireDate: 'be_access_token_expire_date',
+			configKey: this.defaultConfigKey
+		};
 
-    if (!opt.baseUrl) {
-      try {
-        opt.baseUrl = window.location.protocol + '//' + window.location.hostname + (window.location.port ? ':' + window.location.port : '') + '/api/latest/';
-      } catch (ex) {
-        //
-      }
-    }
+		for (var k in conf) {
+			opt[k] = conf[k];
+		}
 
-    this.conf = opt;
-    BEApiRegistry.add(this.configKey, this.conf);
-  }
+		// if the base url is not provided, try to extract it from the `window.location`.
+		if (!opt.baseUrl) {
+			try {
+				opt.baseUrl = window.location.protocol + '//' + window.location.hostname + (window.location.port ? ':' + window.location.port : '') + '/api/latest/';
+			} catch (ex) {
+				//
+			}
+		}
 
-  _createClass(BEApi, [{
-    key: '_getOptions',
-    value: function _getOptions(opt) {
-      var res = this.conf;
-      for (var k in opt) {
-        res[k] = opt[k];
-      }
-      res['accessToken'] = this.getAccessToken();
+		this.conf = opt;
+		// add the current configuration to the BEApiRegistry.
+		BEApiRegistry.add(this.configKey, this.conf);
+	}
 
-      var url = res.url || '/',
-          accessToken = res.accessToken;
+	/**
+  * The default register configuration key.
+  * @type {String}
+  */
 
-      if (/^([\w\-]+:)?\/{2,3}/.test(url)) {
-        if (url.indexOf(res.baseUrl) !== 0) {
-          throw 'Invalid url';
-        }
-      } else {
-        if (url[0] !== '/') {
-          url = res.baseUrl + (res.baseUrl[res.baseUrl.length - 1] == '/' ? url : '/' + url);
-        } else {
-          url = res.baseUrl + (res.baseUrl[res.baseUrl.length - 1] == '/' ? url.slice(1) : url);
-        }
-      }
-      res['url'] = url;
+	_createClass(BEApi, [{
+		key: '_processOptions',
 
-      if (accessToken) {
-        res['headers'] = res['headers'] && 'object' == typeof res['headers'] ? res['headers'] : {};
-        res['headers']['Authorization'] = 'Bearer ' + accessToken;
-      }
+		/**
+   * Process and return a complete set of options for the Ajax request.
+   * - Automatically set the authorization headers
+   * - Automatically set the frontend base url when a not full url is passed
+   * @private
+   * @param {Object} opt A set of options to pass to the Ajax request.
+   * @return {Object} A complete set of options.
+   */
+		value: function _processOptions(opt) {
+			var res = this.conf;
+			for (var k in opt) {
+				res[k] = opt[k];
+			}
 
-      res.type = res.method = res.type || res.method || 'GET';
+			var url = res.url || '/',
+			    accessToken = this.getAccessToken();
 
-      return res;
-    }
-  }, {
-    key: 'setBaseUrl',
-    value: function setBaseUrl(url) {
-      this.conf.baseUrl = url;
-    }
-  }, {
-    key: 'processXHR',
-    value: function processXHR() {
-      var conf = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+			// check if the provided url is a complete
+			if (/^([\w\-]+:)?\/{2,3}/.test(url)) {
+				// check if the provided is url is valid (hostname == BEdita frontend host)
+				if (url.indexOf(res.baseUrl) !== 0) {
+					throw 'Invalid url';
+				}
+			} else if (url[0] !== '/') {
+				url = res.baseUrl + (res.baseUrl[res.baseUrl.length - 1] == '/' ? url : '/' + url);
+			} else {
+				url = res.baseUrl + (res.baseUrl[res.baseUrl.length - 1] == '/' ? url.slice(1) : url);
+			}
 
-      if (this.getAccessToken() && this.isTokenExpired()) {
-        return new Promise(function (resolve, reject) {
-          var doXHR = function doXHR() {
-            delete conf.headers['Authorization'];
-            conf = this._getOptions(conf);
-            BEXhr.exec(conf).then(function () {
-              resolve.apply(this, arguments);
-            }, function () {
-              reject.apply(this, arguments);
-            });
-          };
-          this.refreshToken().then(doXHR, doXHR);
-        });
-      } else {
-        return BEXhr.exec(conf);
-      }
-    }
-  }, {
-    key: 'get',
-    value: function get() {
-      var conf = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+			res['url'] = url;
 
-      conf = processInput(conf);
-      conf.type = 'GET';
-      conf = this._getOptions(conf);
-      return this.processXHR(conf);
-    }
-  }, {
-    key: 'post',
-    value: function post(conf, data) {
-      if (conf === undefined) conf = {};
+			if (accessToken) {
+				res['headers'] = res['headers'] && 'object' == typeof res['headers'] ? res['headers'] : {};
+				res['headers']['Authorization'] = 'Bearer ' + accessToken;
+			}
 
-      conf = processInput(conf);
-      conf.data = data ? _extend(conf.data || {}, data) : conf.data;
-      conf.type = 'POST';
-      conf = this._getOptions(conf);
-      return this.processXHR(conf);
-    }
-  }, {
-    key: 'put',
-    value: function put(conf, data) {
-      if (conf === undefined) conf = {};
+			res.type = res.method = res.type || res.method || 'GET';
 
-      conf = processInput(conf);
-      conf.data = data ? _extend(conf.data || {}, data) : conf.data;
-      conf.type = 'PUT';
-      conf = this._getOptions(conf);
-      return this.processXHR(conf);
-    }
-  }, {
-    key: 'delete',
-    value: function _delete() {
-      var conf = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+			return res;
+		}
 
-      conf = processInput(conf);
-      conf.type = 'DELETE';
-      conf = this._getOptions(conf);
-      return this.processXHR(conf);
-    }
-  }, {
-    key: 'processAuth',
-    value: function processAuth() {
-      var conf = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+		/**
+   * Perform the Ajax request.
+   * - If Access Tokens is expired, try to renew it before perform the request
+   * - Use {@link BEXhr}
+   * @private
+   * @param {Object} opt A complete set of options to pass to the Ajax request.
+   * @return {Promise} The Ajax request Promise.
+   */
+	}, {
+		key: '_processXHR',
+		value: function _processXHR() {
+			var opt = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-      conf.url = 'auth';
-      var self = this,
-          storage = BEApi.storage,
-          opt = this.conf,
-          promise = this.post(conf);
-      promise.then(function (res) {
-        if (res && res.data && res.data.access_token) {
-          storage.setItem(opt.accessTokenKey, res.data.access_token);
-          storage.setItem(opt.refreshTokenKey, res.data.refresh_token);
-          storage.setItem(opt.accessTokenExpireDate, Date.now() + res.data.expires_in * 1000);
-        } else {
-          storage.removeItem(opt.accessTokenKey);
-          storage.removeItem(opt.refreshTokenKey);
-          storage.removeItem(opt.accessTokenExpireDate);
-        }
-      }, function () {
-        storage.removeItem(opt.accessTokenKey);
-        storage.removeItem(opt.refreshTokenKey);
-        storage.removeItem(opt.accessTokenExpireDate);
-      });
-      return promise;
-    }
-  }, {
-    key: 'auth',
-    value: function auth(user, pwd) {
-      var conf = {
-        data: {
-          username: user,
-          password: pwd
-        }
-      };
-      return this.processAuth(conf);
-    }
-  }, {
-    key: 'refreshToken',
-    value: function refreshToken() {
-      var storage = BEApi.storage,
-          opt = this.conf,
-          conf = {
-        data: {
-          grant_type: 'refresh_token',
-          refresh_token: this.getRefreshToken()
-        }
-      };
-      storage.removeItem(opt.accessTokenKey);
-      storage.removeItem(opt.accessTokenExpireDate);
-      return this.processAuth(conf);
-    }
-  }, {
-    key: 'logout',
-    value: function logout() {
-      var storage = BEApi.storage,
-          opt = this.conf,
-          promise = this['delete']({
-        url: 'auth/' + this.getRefreshToken()
-      });
-      storage.removeItem(opt.accessTokenKey);
-      storage.removeItem(opt.accessTokenExpireDate);
+			if (this.getAccessToken() && this.isTokenExpired()) {
+				return new Promise(function (resolve, reject) {
+					var doXHR = function doXHR() {
+						delete opt.headers['Authorization'];
+						opt = this._processOptions(opt);
+						BEXhr.exec(opt).then(function () {
+							resolve.apply(this, arguments);
+						}, function () {
+							reject.apply(this, arguments);
+						});
+					};
+					this.refreshToken().then(doXHR, doXHR);
+				});
+			} else {
+				return BEXhr.exec(opt);
+			}
+		}
 
-      var onLogout = function onLogout(res) {
-        if (res && res.data && res.data.logout) {
-          storage.removeItem(opt.refreshTokenKey);
-        }
-      };
-      promise.then(onLogout, onLogout);
-      return promise;
-    }
-  }, {
-    key: 'getAccessToken',
-    value: function getAccessToken() {
-      return BEApi.storage.getItem(this.conf.accessTokenKey);
-    }
-  }, {
-    key: 'getRefreshToken',
-    value: function getRefreshToken() {
-      return BEApi.storage.getItem(this.conf.refreshTokenKey);
-    }
-  }, {
-    key: 'getAccessTokenExpireDate',
-    value: function getAccessTokenExpireDate() {
-      var data = BEApi.storage.getItem(this.conf.accessTokenExpireDate);
-      if (data) {
-        data = parseInt(data);
-        return new Date(data);
-      }
-    }
-  }, {
-    key: 'isTokenExpired',
-    value: function isTokenExpired() {
-      return new Date() >= this.getAccessTokenExpireDate();
-    }
-  }, {
-    key: 'defaultConfigKey',
-    get: function get() {
-      return 'default';
-    }
-  }, {
-    key: 'configKey',
-    get: function get() {
-      return this.conf && this.conf.configKey || this.defaultConfigKey;
-    }
-  }], [{
-    key: 'extend',
-    value: function extend(method, fn) {
-      if (typeof fn == 'function' && typeof BEApi.prototype[method] == 'undefined') {
-        BEApi.prototype[method] = fn;
-      }
-    }
-  }]);
+		/**
+   * Perform the Ajax request for Authentication.
+   * - Automatically store Access Token, Refresh Token and Expire Date to the storage (@see {@link BEApi.storage}).
+   * @private
+   * @param {Object} opt A complete set of options to pass to the Ajax request.
+   * @return {Promise} The Ajax request Promise.
+   */
+	}, {
+		key: '_processAuth',
+		value: function _processAuth() {
+			var opt = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-  return BEApi;
+			opt.url = 'auth';
+			var self = this,
+			    storage = BEApi.storage,
+			    conf = this.conf,
+			    promise = this.post(opt);
+			promise.then(function (res) {
+				if (res && res.data && res.data.access_token) {
+					storage.setItem(conf.accessTokenKey, res.data.access_token);
+					storage.setItem(conf.refreshTokenKey, res.data.refresh_token);
+					storage.setItem(conf.accessTokenExpireDate, Date.now() + res.data.expires_in * 1000);
+				} else {
+					storage.removeItem(conf.accessTokenKey);
+					storage.removeItem(conf.refreshTokenKey);
+					storage.removeItem(conf.accessTokenExpireDate);
+				}
+			}, function () {
+				storage.removeItem(conf.accessTokenKey);
+				storage.removeItem(conf.refreshTokenKey);
+				storage.removeItem(conf.accessTokenExpireDate);
+			});
+			return promise;
+		}
+
+		/**
+   * Convenience method to set the BEdita API frontend base url.
+   * @param {String} url The url to set.
+   * @return {Object} The BEApi instance.
+   */
+	}, {
+		key: 'setBaseUrl',
+		value: function setBaseUrl(url) {
+			this.conf.baseUrl = url;
+			return this;
+		}
+
+		/**
+   * Perform an API GET request.
+   * - Automatically set `GET` as request method.
+   * - Use {@link _processOptions} and {@link _processOptions}
+   * @param {Object} conf A set of options to pass to the Ajax request.
+   * @return {Promise} The Ajax request Promise.
+   */
+	}, {
+		key: 'get',
+		value: function get() {
+			var opt = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+			opt = _processInput(opt);
+			opt.type = 'GET';
+			opt = this._processOptions(opt);
+			return this._processXHR(opt);
+		}
+
+		/**
+   * Perform an API POST request.
+   * - Automatically set `POST` as request method.
+   * - Use {@link _processOptions} and {@link _processOptions}
+   * @param {Object} conf A set of options to pass to the Ajax request.
+   * @return {Promise} The Ajax request Promise.
+   */
+	}, {
+		key: 'post',
+		value: function post(opt, data) {
+			if (opt === undefined) opt = {};
+
+			opt = _processInput(opt);
+			opt.data = data ? _extend(opt.data || {}, data) : opt.data;
+			opt.type = 'POST';
+			opt = this._processOptions(opt);
+			return this._processXHR(opt);
+		}
+
+		/**
+   * Perform an API PUT request.
+   * - Automatically set `PUT` as request method.
+   * - Use {@link _processOptions} and {@link _processOptions}
+   * @param {Object} conf A set of options to pass to the Ajax request.
+   * @return {Promise} The Ajax request Promise.
+   */
+	}, {
+		key: 'put',
+		value: function put(opt, data) {
+			if (opt === undefined) opt = {};
+
+			opt = _processInput(opt);
+			opt.data = data ? _extend(opt.data || {}, data) : opt.data;
+			opt.type = 'PUT';
+			opt = this._processOptions(opt);
+			return this._processXHR(opt);
+		}
+
+		/**
+   * Perform an API DELETE request.
+   * - Automatically set `DELETE` as request method.
+   * - Use {@link _processOptions} and {@link _processOptions}
+   * @param {Object} conf A set of options to pass to the Ajax request.
+   * @return {Promise} The Ajax request Promise.
+   */
+	}, {
+		key: 'delete',
+		value: function _delete() {
+			var opt = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+			opt = _processInput(opt);
+			opt.type = 'DELETE';
+			opt = this._processOptions(opt);
+			return this._processXHR(opt);
+		}
+
+		/**
+   * Perform an API Auth request.
+   * - Use {@link _processAuth}
+   * - Automatically store Access Token to the storage (@see {@link BEApi.storage}).
+   * @param {String} username The username.
+   * @param {String} password The user's password.
+   * @return {Promise} The Ajax request Promise.
+   */
+	}, {
+		key: 'auth',
+		value: function auth(username, password) {
+			var conf = {
+				data: {
+					username: username,
+					password: password
+				}
+			};
+			return this._processAuth(conf);
+		}
+
+		/**
+   * Perform an API Refresh Token request.
+   * - Use {@link _processAuth}
+   * - Retrieve Access Token from the storage (@see {@link BEApi.storage}).
+   * @return {Promise} The Ajax request Promise.
+   */
+	}, {
+		key: 'refreshToken',
+		value: function refreshToken() {
+			var storage = BEApi.storage,
+			    conf = this.conf,
+			    opt = {
+				data: {
+					grant_type: 'refresh_token',
+					refresh_token: this.getRefreshToken()
+				}
+			};
+			storage.removeItem(conf.accessTokenKey);
+			storage.removeItem(conf.accessTokenExpireDate);
+			return this._processAuth(opt);
+		}
+
+		/**
+   * Perform an API Logout request.
+   * - Remove all BEApi data from the storage (@see {@link BEApi.storage}).
+   * @return {Promise} The Ajax request Promise.
+   */
+	}, {
+		key: 'logout',
+		value: function logout() {
+			var storage = BEApi.storage,
+			    opt = this.conf,
+			    promise = this['delete']({
+				url: 'auth/' + this.getRefreshToken()
+			});
+			storage.removeItem(opt.accessTokenKey);
+			storage.removeItem(opt.accessTokenExpireDate);
+
+			var onLogout = function onLogout(res) {
+				if (res && res.data && res.data.logout) {
+					storage.removeItem(opt.refreshTokenKey);
+				}
+			};
+			promise.then(onLogout, onLogout);
+			return promise;
+		}
+
+		/**
+   * Retrieve Access Token from the storage (@see {@link BEApi.storage}).
+   * @return {String} The Access Token
+   */
+	}, {
+		key: 'getAccessToken',
+		value: function getAccessToken() {
+			return BEApi.storage.getItem(this.conf.accessTokenKey) || undefined;
+		}
+
+		/**
+   * Retrieve Refresh Token from the storage (@see {@link BEApi.storage}).
+   * @return {String} The Refresh Token
+   */
+	}, {
+		key: 'getRefreshToken',
+		value: function getRefreshToken() {
+			return BEApi.storage.getItem(this.conf.refreshTokenKey) || undefined;
+		}
+
+		/**
+   * Retrieve Access Token Expire Date from the storage (@see {@link BEApi.storage}).
+   * @return {Date} The Access Token Expire Date
+   */
+	}, {
+		key: 'getAccessTokenExpireDate',
+		value: function getAccessTokenExpireDate() {
+			var data = BEApi.storage.getItem(this.conf.accessTokenExpireDate);
+			if (data) {
+				data = parseInt(data);
+				return new Date(data);
+			}
+		}
+
+		/**
+   * Check if Access Token is expired
+   * @return {Boolean} If token is expired, return `true`, otherwise `false`
+   */
+	}, {
+		key: 'isTokenExpired',
+		value: function isTokenExpired() {
+			return new Date() >= this.getAccessTokenExpireDate();
+		}
+
+		/**
+   * Retrieve the storage interface.
+   * The storage is used to save access and refresh tokens.
+   * By default, the storage interface in the browser is the localStorage {@link https://developer.mozilla.org/it/docs/Web/API/Window/localStorage}
+   * while in a Node environment is `node-localstorage` {@link https://www.npmjs.com/package/node-localstorage}
+   * @static
+   * @return {Object} The storage interface
+   */
+	}, {
+		key: 'defaultConfigKey',
+		get: function get() {
+			return 'default';
+		}
+
+		/**
+   * Return the chosen registry configuration key or the default one.
+   * @type {String}
+   * @default 'default'
+   */
+	}, {
+		key: 'configKey',
+		get: function get() {
+			return this.conf && this.conf.configKey || this.defaultConfigKey;
+		}
+	}], [{
+		key: 'storage',
+		get: function get() {
+			if (this._storage) {
+				return this._storage;
+			}
+			if ('object' == typeof module && 'object' == typeof module.exports) {
+				var LocalStorage = require('node-localstorage').LocalStorage;
+				return BEApi.storage = new LocalStorage('./beapi');
+			} else if ('undefined' !== typeof localStorage) {
+				return BEApi.storage = window.localStorage;
+			}
+		},
+
+		/**
+   * Set a custom the storage interface.
+   * Set an alternative storage interface with the same LocalStorage API (`setItem`, `getItem` and `removeItem`)
+   * @static
+   */
+		set: function set(storage) {
+			if (typeof storage['setItem'] === 'function' && typeof storage['getItem'] === 'function' && typeof storage['removeItem'] === 'function') {
+				this._storage = storage;
+			} else {
+				throw 'Invalid custom storage.';
+			}
+		}
+
+		/**
+   * Retrieve the Ajax interface.
+   * The Ajax is used to perform XMLHttpRequest requests.
+   * By default, the Ajax interface in the browser is the XMLHttpRequest {@link https://developer.mozilla.org/it/docs/Web/API/XMLHttpRequest}
+   * while in a Node environment is `xmlhttprequest` {@link https://www.npmjs.com/package/xmlhttprequest}
+   * @static
+   * @return {Object} The Ajax interface
+   */
+	}, {
+		key: 'xhr',
+		get: function get() {
+			return BEXhr.xhr;
+		},
+
+		/**
+   * Set a custom the Ajax interface.
+   * Set an alternative Ajax interface compatible with a `jQuery.ajax` like pattern {@link http://api.jquery.com/jquery.ajax/}
+   * @static
+   */
+		set: function set(xhr) {
+			BEXhr.xhr = xhr;
+		}
+	}]);
+
+	return BEApi;
 })();
 'use strict';
 

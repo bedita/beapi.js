@@ -29,6 +29,27 @@ export class BEObject extends BEModel {
         });
     }
 
+	save(data = {}) {
+		var that = this;
+		this.set(data);
+		var dataToSend = this.toJSON();
+		return new Promise(function(resolve, reject) {
+			var promise = new BEApi(that.conf).post('objects', {
+				data: dataToSend
+			});
+            promise.then(function(res) {
+                if (res && res.data && res.data.object) {
+                    that.set(res.data.object);
+					resolve(res);
+                } else {
+					reject(res);
+				}
+            }, function (err) {
+				reject(err);
+            });
+        });
+	}
+
     set(data) {
         var that = this;
         var relations = data.relations || {};
@@ -114,6 +135,17 @@ export class BEObject extends BEModel {
 			that.set(scope);
 		});
 		return queue;
+	}
+
+	toJSON() {
+		var res = {},
+			data = this;
+		for (var k in data) {
+			if (k !== 'conf' && typeof data[k] !== 'function') {
+				res[k] = data[k];
+			}
+		}
+		return res;
 	}
 
 }
