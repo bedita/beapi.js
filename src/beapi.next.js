@@ -145,6 +145,14 @@ export class BEApi {
 	}
 
 	/**
+	 * Get instance configuration object.
+	 * @type {object}
+	 */
+	getConfiguration() {
+		return this.conf;
+	}
+
+	/**
 	 * Process and return a complete set of options for the Ajax request.
 	 * - Automatically set the authorization headers
 	 * - Automatically set the frontend base url when a not full url is passed

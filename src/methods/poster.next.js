@@ -1,6 +1,6 @@
-import { BEApiQueue, BEApiQueueMethod } from '../beapi.queue.next.js';
+import { BEApiQueue, BEApiQueueBaseMethod } from '../beapi.queue.next.js';
 
-class BEApiQueuePoster extends BEApiQueueMethod {
+class BEApiQueuePoster extends BEApiQueueBaseMethod {
 
 	constructor(options = {}) {
 		super(options);
