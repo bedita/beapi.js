@@ -1,24 +1,43 @@
-"use strict";
+'use strict';
 
-var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; continue _function; } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
 var BEModel = (function () {
 	function BEModel(conf) {
 		_classCallCheck(this, BEModel);
 
-		this.conf = conf;
+		this.__config = conf;
+		this.__modified = [];
 	}
 
 	_createClass(BEModel, [{
-		key: "config",
-		value: function config(conf) {
-			this.conf = conf;
+		key: '_config',
+		value: function _config(conf) {
+			if (conf) {
+				this.__config = conf;
+			}
+			return this.__config;
+		}
+	}, {
+		key: '_modified',
+		value: function _modified(key) {
+			if (key === false) {
+				this.__modified = [];
+			} else if (key && this.__modified.indexOf(key) === -1) {
+				this.__modified.push(key);
+			}
+			return this.__modified;
+		}
+	}], [{
+		key: 'unsetFromData',
+		get: function get() {
+			return ['__modified', '__config'];
 		}
 	}]);
 
@@ -31,14 +50,32 @@ var BEArray = (function (_Array) {
 	function BEArray(items, conf) {
 		_classCallCheck(this, BEArray);
 
-		_get(Object.getPrototypeOf(BEArray.prototype), "constructor", this).call(this, items);
-		this.conf = conf;
+		_get(Object.getPrototypeOf(BEArray.prototype), 'constructor', this).call(this, items);
+		this.__config = conf;
 	}
 
 	_createClass(BEArray, [{
-		key: "config",
-		value: function config(conf) {
-			this.conf = conf;
+		key: '_config',
+		value: function _config(conf) {
+			if (conf) {
+				this.__config = conf;
+			}
+			return this.__config;
+		}
+	}, {
+		key: '_modified',
+		value: function _modified(key) {
+			if (key === false) {
+				this.__modified = [];
+			} else if (key && this.__modified.indexOf(key) === -1) {
+				this.__modified.push(key);
+			}
+			return this.__modified;
+		}
+	}], [{
+		key: 'unsetFromData',
+		get: function get() {
+			return ['__modified', '__config'];
 		}
 	}]);
 
@@ -64,7 +101,7 @@ var BECollection = (function (_BEArray) {
 		_classCallCheck(this, BECollection);
 
 		_get(Object.getPrototypeOf(BECollection.prototype), 'constructor', this).call(this, [], conf);
-		var items;
+		var items = [];
 		if (options.alias) {
 			this.alias = options.alias;
 			if (options.filter) {
@@ -88,7 +125,7 @@ var BECollection = (function (_BEArray) {
 		key: 'push',
 		value: function push(obj) {
 			if (!(obj instanceof BEObject)) {
-				obj = new BEObject(obj, this.conf);
+				obj = new BEObject(obj, this._config());
 			}
 			Array.prototype.push.call(this, obj);
 		}
@@ -102,7 +139,7 @@ var BECollection = (function (_BEArray) {
 						return that.alias.fetch(that.url || url || undefined);
 					}
 					that.splice(0, that.length);
-					var beapi = new BEApi(that.conf);
+					var beapi = new BEApi(that._config());
 					beapi.get(that.url || url).then(function (res) {
 						if (res && res.data && res.data.objects) {
 							for (var i = 0; i < res.data.objects.length; i++) {
@@ -166,11 +203,16 @@ var BEObject = (function (_BEModel) {
             var that = this;
             return new Promise(function (resolve, reject) {
                 if (that.id) {
-                    var promise = new BEApi(that.conf).get('objects/' + that.id);
+                    var promise = new BEApi(that._config()).get('objects/' + that.id);
                     promise.then(function (res) {
                         if (res && res.data && res.data.object) {
                             that.set(res.data.object);
+                            that._modified(false);
+                        } else {
+                            reject(res);
                         }
+                    }, function (err) {
+                        reject(err);
                     });
                     return promise;
                 } else {
@@ -185,14 +227,16 @@ var BEObject = (function (_BEModel) {
 
             var that = this;
             this.set(data);
-            var dataToSend = this.toJSON();
+            var dataToSend = this.toJSON(this._modified());
+            dataToSend.id = this.id;
             return new Promise(function (resolve, reject) {
-                var promise = new BEApi(that.conf).post('objects', {
+                var promise = new BEApi(that._config()).post('objects', {
                     data: dataToSend
                 });
                 promise.then(function (res) {
                     if (res && res.data && res.data.object) {
                         that.set(res.data.object);
+                        that._modified(false);
                         resolve(res);
                     } else {
                         reject(res);
@@ -212,7 +256,7 @@ var BEObject = (function (_BEModel) {
             var childrenList = data.children ? {} : false;
 
             var defineRelation = function defineRelation(name, options) {
-                that.relations[name] = new BECollection(options, that.conf);
+                that.relations[name] = new BECollection(options, that._config());
             };
 
             for (var k in relations) {
@@ -226,7 +270,7 @@ var BEObject = (function (_BEModel) {
                 this.children = new BECollection({
                     url: children.url,
                     count: children.count
-                }, that.conf);
+                }, that._config());
                 if (children.sections) {
                     this.sections = new BECollection({
                         alias: this.children,
@@ -235,7 +279,7 @@ var BEObject = (function (_BEModel) {
                         },
                         url: children.sections.url,
                         count: children.sections
-                    }, that.conf);
+                    }, that._config());
                 }
             }
 
@@ -250,6 +294,7 @@ var BEObject = (function (_BEModel) {
                 }
                 if (that[k] !== d) {
                     that[k] = d;
+                    this._modified(k);
                 }
             }
 
@@ -281,7 +326,7 @@ var BEObject = (function (_BEModel) {
         key: 'query',
         value: function query() {
             var that = this;
-            var queue = new BEApiQueue(this.conf);
+            var queue = new BEApiQueue(this._config());
             if ('id' in this && 'nickname' in this) {
                 queue.identity(this);
             } else {
@@ -289,16 +334,17 @@ var BEObject = (function (_BEModel) {
             }
             queue.all(function (scope) {
                 that.set(scope);
+                that._modified(false);
             });
             return queue;
         }
     }, {
         key: 'toJSON',
-        value: function toJSON() {
+        value: function toJSON(keys) {
             var res = {},
                 data = this;
             for (var k in data) {
-                if (k !== 'conf' && typeof data[k] !== 'function') {
+                if (BEObject.unsetFromData.indexOf(k) === -1 && typeof data[k] !== 'function' && (!keys || !Array.isArray(keys) || keys.indexOf(k) !== -1)) {
                     res[k] = data[k];
                 }
             }
@@ -575,7 +621,15 @@ var BEApi = (function () {
   */
 
 	_createClass(BEApi, [{
-		key: '_processOptions',
+		key: 'getConfiguration',
+
+		/**
+   * Get instance configuration object.
+   * @type {object}
+   */
+		value: function getConfiguration() {
+			return this.conf;
+		}
 
 		/**
    * Process and return a complete set of options for the Ajax request.
@@ -585,6 +639,8 @@ var BEApi = (function () {
    * @param {Object} opt A set of options to pass to the Ajax request.
    * @return {Object} A complete set of options.
    */
+	}, {
+		key: '_processOptions',
 		value: function _processOptions(opt) {
 			var res = this.conf;
 			for (var k in opt) {
@@ -970,115 +1026,232 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var noop = function noop() {};
 
+/**
+ * Create a task model to insert into a BEApiQueue.
+ * @class
+ */
+
+var BEApiQueueTask =
+
+/**
+ * Instantiate a BEApiQueueTask Object.
+ * @constructor
+ * @param {Function} method A BEApiQueue Method class constructor.
+ * @param {Array} args The list of arguments to pass to the BEApiQueue Method constructor
+ */
+function BEApiQueueTask(method) {
+	var args = arguments.length <= 1 || arguments[1] === undefined ? [] : arguments[1];
+
+	_classCallCheck(this, BEApiQueueTask);
+
+	var self = this;
+	if (method) {
+		self.fn = method;
+	}
+	if (args) {
+		self.args = args;
+	}
+	// instantiate the task local promise
+	self.promise = new Promise(function (resolve, reject) {
+		self.resolve = resolve;
+		self.reject = reject;
+	});
+}
+
+/**
+ * Create a chainable queue of BEApi requests.
+ * @class
+ */
+;
+
 var BEApiQueue = (function () {
-	_createClass(BEApiQueue, [{
-		key: '_queue',
-		get: function get() {
-			return this.__queue || [];
-		},
-		set: function set(ar) {
-			if (Array.isArray(ar)) {
-				this.__queue = ar;
-			}
-		}
-	}]);
+
+	/**
+  * Instantiate a BEApiQueue Object.
+  * @constructor
+  * @param {String|Object|BEApi} conf A set of options or a configuration key for BEApiRegistry.
+  */
 
 	function BEApiQueue(conf) {
 		_classCallCheck(this, BEApiQueue);
 
 		var that = this;
 		if (typeof conf === 'string') {
+			// if conf is a string, try to read configuration from BEApiRegistry
 			this.conf = BEApiRegistry.getInstance(conf);
+		} else if (conf instanceof BEApi) {
+			// if conf is a BEApi instance, grab the configuration with `BEApi.getConfiguration` method
+			this.conf = conf.getConfiguration();
 		} else if (typeof conf === 'object') {
+			// if conf is a plain object, use it
 			this.conf = conf;
 		} else {
 			throw 'No BEApi configuration provided.';
 		}
+		// setup the global promise and resolvers
 		this._promise = new Promise(function (resolve, reject) {
 			that._resolver = resolve;
 			that._rejecter = reject;
 		});
-		this._reset();
+		this.reset();
 	}
 
+	/**
+  * Abstract class for `BEApiQueue Method`s.
+  * @class
+  */
+
+	/**
+  * Reset the queue.
+  * @return {BEApiQueue} the instance
+  */
+
 	_createClass(BEApiQueue, [{
-		key: '_add',
-		value: function _add(task) {
-			task.push(new Promise(function (resolve, reject) {
-				task.push(resolve);
-				task.push(reject);
-			}));
-			this._queue.push(task);
+		key: 'reset',
+		value: function reset() {
+			this.queue = [];
+			return this;
 		}
+
+		/**
+   * Add a BEApiQueueTask instance to the queue.
+   * @param {BEApiQueueTask} task
+   * @return {BEApiQueue} the instance
+   */
 	}, {
-		key: '_reset',
-		value: function _reset() {
-			this._queue = [];
+		key: 'add',
+		value: function add(task) {
+			this.queue.push(task);
+			return this;
 		}
+
+		/**
+   * Perform the queue of requests.
+   * @return {Promise} the global promise
+   */
 	}, {
 		key: 'exec',
 		value: function exec() {
 			var self = this,
-			    queue = this._queue,
+			    queue = this.queue,
 			    beapi = new BEApi(this.conf),
 			    scope;
 
-			if (queue.length == 0) {
-				self._resolver(scope);
-			} else {
-				(function () {
-					var _exec = function _exec(queue, index) {
-						index = index || 0;
-						if (index == queue.length) {
-							return self._resolver(scope);
-						}
-						var task = queue[index],
-						    method = task[0],
-						    args = task[1],
-						    resolver = task[2],
-						    rejecter = task[3],
-						    promise = task[4],
-						    config = new (_bind.apply(BEApiQueue.tasks[method], [null].concat(_toConsumableArray(args))))();
+			// let's start the queue!
+			_exec(queue);
 
-						var onLoad = function onLoad(res) {
-							config.validate(res).then(function () {
-								config.transform(scope, res).then(function (obj) {
-									scope = obj;
-									resolver(scope);
-									_exec(queue, index + 1);
-								}, function (err) {
-									rejecter(scope);
-									self._rejecter(err);
-								});
-							}, function (err) {
-								self._rejecter(err);
-							});
-						};
+			function _exec(queue, index) {
+				index = index || 0;
+				if (index == queue.length) {
+					// if iterator reached the end of the queue, resolve the global promise
+					return self._resolver(scope);
+				}
+				var task = queue[index],
+				    method = task.fn,
+				    args = task.args,
+				    resolver = task.resolve,
+				    rejecter = task.reject,
+				    promise = task.promise,
+				    traskInstance = new (_bind.apply(BEApiQueue.tasks[method], [null].concat(_toConsumableArray(args))))();
 
-						config.input.call(config, scope).then(function (options) {
-							beapi[config.type.toLowerCase()].apply(beapi, options).then(onLoad, onLoad);
+				// process the input arguments using task instance `input` method
+				traskInstance.input.call(traskInstance, scope).then(function (options) {
+					// perform the Ajax request using the BEApi instance
+					// `done` and `fail` callbacks both will be process by the local `onLoad` function
+					var ajaxMethod = traskInstance.type.toLowerCase();
+					if (typeof beapi[ajaxMethod] == 'function') {
+						beapi[ajaxMethod].apply(beapi, options).then(onLoad, onLoad);
+					}
+				});
+
+				function onLoad(res) {
+					// validate the request result using task instance `validate` method
+					traskInstance.validate(res).then(function () {
+						// if validation is succeeded, process the result using task instance `transform` method.
+						// The `transform` function of a BEApiQueue Method performs some changes to the request result
+						// and to the scope object.
+						traskInstance.transform(scope, res).then(function (obj) {
+							// update the scope
+							scope = obj;
+							// resolve the task promise
+							resolver(scope);
+							// execute the next task!
+							_exec(queue, index + 1);
+						}, function (err) {
+							// if transformation fails, reject both task and global promises and stop the queue
+							rejecter(scope);
+							self._rejecter(err);
 						});
-					};
-
-					_exec(queue);
-				})();
+					}, function (err) {
+						// if validation fails, reject both task and global promises and stop the queue
+						rejecter(scope);
+						self._rejecter(err);
+					});
+				}
 			}
+
 			return this._promise;
 		}
+
+		/**
+   * Alias of `BEApiQueue.exec`.
+   * @see {@link BEApiQueue.exec}
+   */
 	}, {
 		key: 'get',
 		value: function get() {
 			return this.exec();
 		}
+
+		/**
+   * Get the first task in queue.
+   * @return {BEApiQueueTask} The first task.
+   */
+	}, {
+		key: 'first',
+		value: function first() {
+			if (this.queue.length) {
+				return this.queue[0];
+			}
+		}
+
+		/**
+   * Get the last task in queue.
+   * @return {BEApiQueueTask} The last task.
+   */
+	}, {
+		key: 'last',
+		value: function last() {
+			if (this.queue.length) {
+				return this.queue[this.queue.length - 1];
+			}
+		}
+
+		/**
+   * Alias of the last task in queue `promise.then`.
+   * Attach a success and/or fail callback to the last added task.
+   * If the queue is empty, the method `BEApiQueue.all` {@link BEApiQueue.all} is called instead.
+   * @param {Function} done The success callback [optional].
+   * @param {Function} fail The fail callback [optional].
+   * @return {Promise} The last task promise or the global promise.
+   */
 	}, {
 		key: 'then',
 		value: function then(done, fail) {
-			if (this._queue.length) {
-				return this._queue[this._queue.length - 1][4].then(done || noop, fail || noop);
+			if (this.queue.length) {
+				return this.last().promise.then(done || noop, fail || noop);
 			} else {
 				return this.all(done || noop, fail || noop);
 			}
 		}
+
+		/**
+   * Alias of the global `promise.then`.
+   * Attach a success and/or fail callback to the global queue promise.
+   * @param {Function} done The success callback [optional].
+   * @param {Function} fail The fail callback [optional].
+   * @return {Promise} The global promise.
+   */
 	}, {
 		key: 'all',
 		value: function all(done, fail) {
@@ -1086,10 +1259,17 @@ var BEApiQueue = (function () {
 				return this._promise.then(done || noop, fail || noop);
 			}
 		}
+
+		/**
+   * Attach a method to the `BEApiQueue.prototype`.
+   * The attached method should be an instance of `BEApiQueueBaseMethod`.
+   * @param {String} taskName The name of the function attached to the prototype.
+   * @param {BEApiQueueBaseMethod} def The method class.
+   */
 	}], [{
 		key: 'register',
 		value: function register(taskName, def) {
-			if (taskName && BEApiQueue._reserved.indexOf(taskName) !== -1) {
+			if (taskName && typeof BEApiQueue.prototype[taskName] !== 'undefined') {
 				throw 'Reserved method';
 			}
 
@@ -1102,38 +1282,51 @@ var BEApiQueue = (function () {
 						args[_key] = arguments[_key];
 					}
 
-					this._add([method, args]);
+					this.add(new BEApiQueueTask(method, args));
 					return this;
 				};
 			})(taskName);
-		}
-	}, {
-		key: '_reserved',
-		get: function get() {
-			return ['exec', 'get'];
 		}
 	}]);
 
 	return BEApiQueue;
 })();
 
-var BEApiQueueMethod = (function () {
-	_createClass(BEApiQueueMethod, [{
+var BEApiQueueBaseMethod = (function () {
+	_createClass(BEApiQueueBaseMethod, [{
 		key: 'type',
+
+		/**
+   * The HTTP method of the request.
+   * @type {String}
+   * @default 'get'
+   */
 		get: function get() {
 			return 'get';
 		}
+
+		/**
+   * Initialize a `BEApiQueue Method`.
+   * @constructor
+   */
 	}]);
 
-	function BEApiQueueMethod() {
+	function BEApiQueueBaseMethod() {
 		var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-		_classCallCheck(this, BEApiQueueMethod);
+		_classCallCheck(this, BEApiQueueBaseMethod);
 
 		this.options = options;
 	}
 
-	_createClass(BEApiQueueMethod, [{
+	/**
+  * Arguments input processor.
+  * @param {Object} scope The scope for the queue.
+  * @param {*} args All the arguments passed to the method when invoked in queue.
+  * @return {Promise} A promise resolved when all inputs are processed.
+  */
+
+	_createClass(BEApiQueueBaseMethod, [{
 		key: 'input',
 		value: function input(scope) {
 			for (var _len2 = arguments.length, args = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
@@ -1144,6 +1337,12 @@ var BEApiQueueMethod = (function () {
 				resolve(args);
 			});
 		}
+
+		/**
+   * Validate the result of a request response.
+   * @param {Object} res The request response.
+   * @return {Promise} A promise resolved when the response is validated.
+   */
 	}, {
 		key: 'validate',
 		value: function validate(res) {
@@ -1155,6 +1354,13 @@ var BEApiQueueMethod = (function () {
 				}
 			});
 		}
+
+		/**
+   * Transform the result of a request response.
+   * @param {Object} scope The scope for the queue.
+   * @param {Object} res The request response.
+   * @return {Promise} A promise resolved when scope changes are finished.
+   */
 	}, {
 		key: 'transform',
 		value: function transform(scope, res) {
@@ -1164,7 +1370,7 @@ var BEApiQueueMethod = (function () {
 		}
 	}]);
 
-	return BEApiQueueMethod;
+	return BEApiQueueBaseMethod;
 })();
 'use strict';
 'use strict';
@@ -1177,8 +1383,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var BEApiQueueIdentity = (function (_BEApiQueueMethod) {
-	_inherits(BEApiQueueIdentity, _BEApiQueueMethod);
+var BEApiQueueIdentity = (function (_BEApiQueueBaseMethod) {
+	_inherits(BEApiQueueIdentity, _BEApiQueueBaseMethod);
 
 	function BEApiQueueIdentity(data) {
 		_classCallCheck(this, BEApiQueueIdentity);
@@ -1217,7 +1423,7 @@ var BEApiQueueIdentity = (function (_BEApiQueueMethod) {
 	}]);
 
 	return BEApiQueueIdentity;
-})(BEApiQueueMethod);
+})(BEApiQueueBaseMethod);
 
 BEApiQueue.register('identity', BEApiQueueIdentity);
 'use strict';
@@ -1230,8 +1436,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var BEApiQueueObjects = (function (_BEApiQueueMethod) {
-	_inherits(BEApiQueueObjects, _BEApiQueueMethod);
+var BEApiQueueObjects = (function (_BEApiQueueBaseMethod) {
+	_inherits(BEApiQueueObjects, _BEApiQueueBaseMethod);
 
 	function BEApiQueueObjects(id, type) {
 		_classCallCheck(this, BEApiQueueObjects);
@@ -1265,7 +1471,7 @@ var BEApiQueueObjects = (function (_BEApiQueueMethod) {
 	}]);
 
 	return BEApiQueueObjects;
-})(BEApiQueueMethod);
+})(BEApiQueueBaseMethod);
 
 BEApiQueue.register('objects', BEApiQueueObjects);
 'use strict';
@@ -1278,8 +1484,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var BEApiQueuePoster = (function (_BEApiQueueMethod) {
-	_inherits(BEApiQueuePoster, _BEApiQueueMethod);
+var BEApiQueuePoster = (function (_BEApiQueueBaseMethod) {
+	_inherits(BEApiQueuePoster, _BEApiQueueBaseMethod);
 
 	function BEApiQueuePoster() {
 		var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
@@ -1320,7 +1526,7 @@ var BEApiQueuePoster = (function (_BEApiQueueMethod) {
 	}]);
 
 	return BEApiQueuePoster;
-})(BEApiQueueMethod);
+})(BEApiQueueBaseMethod);
 
 BEApiQueue.register('poster', BEApiQueuePoster);
 'use strict';
@@ -1333,8 +1539,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var BEApiQueueRelation = (function (_BEApiQueueMethod) {
-	_inherits(BEApiQueueRelation, _BEApiQueueMethod);
+var BEApiQueueRelation = (function (_BEApiQueueBaseMethod) {
+	_inherits(BEApiQueueRelation, _BEApiQueueBaseMethod);
 
 	function BEApiQueueRelation(relName) {
 		_classCallCheck(this, BEApiQueueRelation);
@@ -1368,7 +1574,7 @@ var BEApiQueueRelation = (function (_BEApiQueueMethod) {
 	}]);
 
 	return BEApiQueueRelation;
-})(BEApiQueueMethod);
+})(BEApiQueueBaseMethod);
 
 BEApiQueue.register('relation', BEApiQueueRelation);
 

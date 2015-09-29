@@ -7,7 +7,7 @@ export class BECollection extends BEArray {
 
 	constructor(options = {}, conf = {}) {
 		super([], conf);
-		var items;
+		var items = [];
         if (options.alias) {
             this.alias = options.alias;
 			if (options.filter) {
@@ -29,7 +29,7 @@ export class BECollection extends BEArray {
 
 	push(obj) {
 		if (!(obj instanceof BEObject)) {
-			obj = new BEObject(obj, this.conf);
+			obj = new BEObject(obj, this._config());
 		}
 		Array.prototype.push.call(this, obj);
 	}
@@ -42,7 +42,7 @@ export class BECollection extends BEArray {
                     return that.alias.fetch(that.url || url || undefined);
                 }
 				that.splice(0, that.length);
-				var beapi = new BEApi(that.conf);
+				var beapi = new BEApi(that._config());
                 beapi.get(that.url || url).then(function(res) {
                     if (res && res.data && res.data.objects) {
                         for (var i = 0; i < res.data.objects.length; i++) {

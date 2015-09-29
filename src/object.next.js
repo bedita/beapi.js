@@ -16,11 +16,16 @@ export class BEObject extends BEModel {
         var that = this;
         return new Promise(function(resolve, reject) {
             if (that.id) {
-                var promise = new BEApi(that.conf).get('objects/' + that.id);
+                var promise = new BEApi(that._config()).get('objects/' + that.id);
                 promise.then(function(res) {
                     if (res && res.data && res.data.object) {
                         that.set(res.data.object);
-                    }
+						that._modified(false);
+                    } else {
+						reject(res);
+					}
+                }, function (err) {
+					reject(err);
                 });
                 return promise;
             } else {
@@ -32,14 +37,16 @@ export class BEObject extends BEModel {
 	save(data = {}) {
 		var that = this;
 		this.set(data);
-		var dataToSend = this.toJSON();
+		var dataToSend = this.toJSON( this._modified() );
+			dataToSend.id = this.id;
 		return new Promise(function(resolve, reject) {
-			var promise = new BEApi(that.conf).post('objects', {
+			var promise = new BEApi(that._config()).post('objects', {
 				data: dataToSend
 			});
             promise.then(function(res) {
                 if (res && res.data && res.data.object) {
                     that.set(res.data.object);
+					that._modified(false);
 					resolve(res);
                 } else {
 					reject(res);
@@ -58,7 +65,7 @@ export class BEObject extends BEModel {
         var childrenList = data.children ? {} : false;
 
         var defineRelation = function(name, options) {
-            that.relations[name] = new BECollection(options, that.conf);
+            that.relations[name] = new BECollection(options, that._config());
         }
 
         for (var k in relations) {
@@ -72,7 +79,7 @@ export class BEObject extends BEModel {
             this.children = new BECollection({
                 url: children.url,
                 count: children.count
-            }, that.conf);
+            }, that._config());
             if (children.sections) {
                 this.sections = new BECollection({
                     alias: this.children,
@@ -81,7 +88,7 @@ export class BEObject extends BEModel {
                     },
                     url: children.sections.url,
                     count: children.sections
-                }, that.conf);
+                }, that._config());
             }
         }
 
@@ -96,6 +103,7 @@ export class BEObject extends BEModel {
             }
             if (that[k] !== d) {
                 that[k] = d;
+				this._modified(k);
             }
         }
 
@@ -125,7 +133,7 @@ export class BEObject extends BEModel {
 
 	query() {
 		var that = this;
-		var queue = new BEApiQueue(this.conf);
+		var queue = new BEApiQueue(this._config());
 		if ('id' in this && 'nickname' in this) {
 			queue.identity(this);
 		} else {
@@ -133,15 +141,16 @@ export class BEObject extends BEModel {
 		}
 		queue.all(function (scope) {
 			that.set(scope);
+			that._modified(false);
 		});
 		return queue;
 	}
 
-	toJSON() {
+	toJSON(keys) {
 		var res = {},
 			data = this;
 		for (var k in data) {
-			if (k !== 'conf' && typeof data[k] !== 'function') {
+			if (BEObject.unsetFromData.indexOf(k) === -1 && typeof data[k] !== 'function' && (!keys || !Array.isArray(keys) || keys.indexOf(k) !== -1)) {
 				res[k] = data[k];
 			}
 		}
