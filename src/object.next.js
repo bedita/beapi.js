@@ -157,4 +157,8 @@ export class BEObject extends BEModel {
 		return res;
 	}
 
+	static get unsetFromData() {
+		return ['__modified', '__config'];
+	}
+
 }

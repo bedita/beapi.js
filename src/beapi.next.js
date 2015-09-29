@@ -118,7 +118,7 @@ export class BEApi {
 			try {
 		        opt.baseUrl = window.location.protocol + '//' + window.location.hostname + (window.location.port ? ':' + window.location.port: '') + '/api/latest/';
 		    } catch (ex) {
-		        //
+		        throw 'Missing valid `baseUrl`.';
 	    	}
 		}
 
@@ -465,6 +465,7 @@ export class BEApi {
 	 * Set a custom the Ajax interface.
 	 * Set an alternative Ajax interface compatible with a `jQuery.ajax` like pattern {@link http://api.jquery.com/jquery.ajax/}
 	 * @static
+	 * @param {Class} xhr A valid and compatible Ajax interface.
 	 */
 	static set xhr(xhr) {
 		BEXhr.xhr = xhr;

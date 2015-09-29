@@ -1,14 +1,24 @@
-'use strict';
+/**
+ * A base model to handle BE objects.
+ * @class
+ */
+"use strict";
 
-var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; continue _function; } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var BEModel = (function () {
+	/**
+  * Instantiate config properties.
+  * @param {Object} conf A configuration set.
+  * @constructor
+  */
+
 	function BEModel(conf) {
 		_classCallCheck(this, BEModel);
 
@@ -16,16 +26,33 @@ var BEModel = (function () {
 		this.__modified = [];
 	}
 
+	/**
+  * A base model to handle BE collections.
+  * @class
+  */
+
+	/**
+  * Get or set configuration params.
+  * @param {Object} conf An optional set of configuration params.
+  * @return {Object} The current configuration set.
+  */
+
 	_createClass(BEModel, [{
-		key: '_config',
+		key: "_config",
 		value: function _config(conf) {
 			if (conf) {
 				this.__config = conf;
 			}
 			return this.__config;
 		}
+
+		/**
+   * Get a list of fields that need to sync with the server or add e new one.
+   * @param {String|Boolean} key An optional field name which needs to be synced. If `false` is passed, the array will be resetted.
+   * @return {Array} A list of fields which need to be synced.
+   */
 	}, {
-		key: '_modified',
+		key: "_modified",
 		value: function _modified(key) {
 			if (key === false) {
 				this.__modified = [];
@@ -33,11 +60,6 @@ var BEModel = (function () {
 				this.__modified.push(key);
 			}
 			return this.__modified;
-		}
-	}], [{
-		key: 'unsetFromData',
-		get: function get() {
-			return ['__modified', '__config'];
 		}
 	}]);
 
@@ -47,23 +69,42 @@ var BEModel = (function () {
 var BEArray = (function (_Array) {
 	_inherits(BEArray, _Array);
 
+	/**
+  * Instantiate items and config properties.
+  * @param {Array} items A list of `BEModel` objects.
+  * @param {Object} conf A configuration set.
+  * @constructor
+  */
+
 	function BEArray(items, conf) {
 		_classCallCheck(this, BEArray);
 
-		_get(Object.getPrototypeOf(BEArray.prototype), 'constructor', this).call(this, items);
+		_get(Object.getPrototypeOf(BEArray.prototype), "constructor", this).call(this, items);
 		this.__config = conf;
 	}
 
+	/**
+  * Get or set configuration params.
+  * @param {Object} conf An optional set of configuration params.
+  * @return {Object} The current configuration set.
+  */
+
 	_createClass(BEArray, [{
-		key: '_config',
+		key: "_config",
 		value: function _config(conf) {
 			if (conf) {
 				this.__config = conf;
 			}
 			return this.__config;
 		}
+
+		/**
+   * Get a list of fields that need to sync with the server or add e new one.
+   * @param {String|Boolean} key An optional field name which needs to be synced. If `false` is passed, the array will be resetted.
+   * @return {Array} A list of fields which need to be synced.
+   */
 	}, {
-		key: '_modified',
+		key: "_modified",
 		value: function _modified(key) {
 			if (key === false) {
 				this.__modified = [];
@@ -71,11 +112,6 @@ var BEArray = (function (_Array) {
 				this.__modified.push(key);
 			}
 			return this.__modified;
-		}
-	}], [{
-		key: 'unsetFromData',
-		get: function get() {
-			return ['__modified', '__config'];
 		}
 	}]);
 
@@ -350,10 +386,19 @@ var BEObject = (function (_BEModel) {
             }
             return res;
         }
+    }], [{
+        key: 'unsetFromData',
+        get: function get() {
+            return ['__modified', '__config'];
+        }
     }]);
 
     return BEObject;
 })(BEModel);
+/**
+ * XMLHttpRequest wrapper for the browser.
+ * @class
+ */
 'use strict';
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
@@ -367,6 +412,14 @@ var BEXhr = (function () {
 
 	_createClass(BEXhr, null, [{
 		key: 'exec',
+
+		/**
+   * Perform an Ajax request.
+   * Set an alternative Ajax interface compatible with a `XMLHttpRequest` like pattern {@link https://developer.mozilla.org/it/docs/Web/API/XMLHttpRequest}.
+   * @static
+   * @param {Object} options A set of options for the Ajax request.
+   * @return {Promise}
+   */
 		value: function exec() {
 			var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
@@ -377,7 +430,7 @@ var BEXhr = (function () {
 				headers: {},
 				data: undefined
 			};
-
+			// extend defaults with options
 			var opt = {},
 			    merge = [defaults, options];
 			for (var i = 0; i < merge.length; i++) {
@@ -387,11 +440,15 @@ var BEXhr = (function () {
 				}
 			}
 			opt.type = opt.type.toUpperCase();
+			// setup a Promise
 			return new Promise(function (resolve, reject) {
+				// instantiate the Ajax interface (@see {@link BEXhr.xhr})
 				var oReq = new BEXhr.xhr();
 
+				// done listener
 				oReq.addEventListener('load', function () {
 					var data = oReq.response || oReq.responseText;
+					// try to convert JSON data into object
 					if (data) {
 						try {
 							data = JSON.parse(data);
@@ -406,6 +463,7 @@ var BEXhr = (function () {
 					}
 				}, false);
 
+				// error listeners
 				oReq.addEventListener('error', function () {
 					reject(oReq);
 				}, false);
@@ -415,37 +473,61 @@ var BEXhr = (function () {
 				}, false);
 
 				oReq.responseType = opt.responseType;
+
+				// open the request
 				oReq.open(opt.type, opt.url, opt.async);
+				// set headers
 				if (opt.headers && 'object' == typeof opt.headers) {
 					for (var k in opt.headers) {
 						oReq.setRequestHeader(k, opt.headers[k]);
 					}
 				}
-
 				if (opt.type == 'POST' || opt.type == 'PUT' && opt.data !== undefined) {
+					// if POST or PUT method, send data
 					var data = opt.data;
 					if ('object' == typeof data) {
 						data = JSON.stringify(data);
 					}
 					oReq.send(data);
 				} else {
+					// simple request send
 					oReq.send();
 				}
 			});
 		}
 	}, {
 		key: 'xhr',
+
+		/**
+   * Retrieve the Ajax interface.
+   * The Ajax is used to perform XMLHttpRequest requests.
+   * By default, the Ajax interface in the browser is the XMLHttpRequest {@link https://developer.mozilla.org/it/docs/Web/API/XMLHttpRequest}.
+   * while in a Node environment is `xmlhttprequest` {@link https://www.npmjs.com/package/xmlhttprequest}.
+   * @static
+   * @return {Object} The Ajax interface.
+   */
 		get: function get() {
 			if (this._xhr) {
+				// return custom Ajax interface if set
 				return this._xhr;
 			} else {
+				// look for node environment
 				if ('object' == typeof module && 'object' == typeof module.exports) {
+					// return node module
 					return this.xhr = require('xmlhttprequest').XMLHttpRequest;
 				} else {
+					// return browser `XMLHttpRequest`
 					return window.XMLHttpRequest;
 				}
 			}
 		},
+
+		/**
+   * Set a custom the Ajax interface.
+   * Set an alternative Ajax interface compatible with a `XMLHttpRequest` like pattern {@link https://developer.mozilla.org/it/docs/Web/API/XMLHttpRequest}.
+   * @static
+   * @param {Class} xhr A valid and compatible Ajax interface.
+   */
 		set: function set(xhr) {
 			this._xhr = xhr;
 		}
@@ -606,7 +688,7 @@ var BEApi = (function () {
 			try {
 				opt.baseUrl = window.location.protocol + '//' + window.location.hostname + (window.location.port ? ':' + window.location.port : '') + '/api/latest/';
 			} catch (ex) {
-				//
+				throw 'Missing valid `baseUrl`.';
 			}
 		}
 
@@ -1006,6 +1088,7 @@ var BEApi = (function () {
    * Set a custom the Ajax interface.
    * Set an alternative Ajax interface compatible with a `jQuery.ajax` like pattern {@link http://api.jquery.com/jquery.ajax/}
    * @static
+   * @param {Class} xhr A valid and compatible Ajax interface.
    */
 		set: function set(xhr) {
 			BEXhr.xhr = xhr;
