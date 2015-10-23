@@ -6,7 +6,7 @@ var System = require('traceur/src/node/System.js'),
 	XMLHttpRequest = require('xmlhttprequest').XMLHttpRequest;
 
 describe('beapi.js', function() {
-    var beapi;
+    var beapi, createdObject;
 
 	describe('load', function () {
 		beforeEach(function(done) {
@@ -82,25 +82,69 @@ describe('beapi.js', function() {
     });
 	describe('get an object', function() {
         var object = null;
-
         beforeEach(function(done) {
-            var p = new BEObject({ id: conf.publication_id }, beapi.getConfiguration());
-			var q = p.query().relation('attach').relation('poster');
-			q.get().then(function(obj) {
-				response = obj;
-				done();
-            }, function(err) {
-				console.log('fail', err);
-                done();
-            });
+            object = new BEObject({ id: conf.publication_id }, beapi.getConfiguration());
+			object
+				.query()
+				.relation('attach')
+				.relation('poster')
+				.get()
+				.then(function(obj) {
+					response = obj;
+					done();
+	            }, function(err) {
+					console.log('fail', err);
+	                done();
+	            });
         });
 
         it('it should return a be object', function() {
-            expect(response).to.not.equal(null);
-            expect(typeof response.id).to.equal('number');
-            expect(typeof response.nickname).to.equal('string');
+            expect(object).to.not.equal(null);
+            expect(typeof object.id).to.equal('number');
+            expect(typeof object.nickname).to.equal('string');
         });
     });
+	describe('create an object', function() {
+        beforeEach(function(done) {
+            createdObject = new BEObject({
+				title: 'Test api',
+				object_type: 'book',
+				parents: [conf.publication_id]
+			}, beapi.getConfiguration());
+			createdObject.create().then(function () {
+				done();
+			}, function (err) {
+				console.log('fail', err);
+				done();
+			});
+        });
+
+        it('it should return a be object', function() {
+            expect(createdObject).to.not.equal(undefined);
+            expect(typeof createdObject.id).to.equal('number');
+            expect(typeof createdObject.nickname).to.equal('string');
+        });
+    });
+	describe('remove an object', function () {
+		var removed = false;
+		beforeEach(function(done) {
+			if (createdObject) {
+				createdObject.remove().then(function () {
+					removed = true;
+					done();
+				}, function (err) {
+					console.log('fail', err);
+					done();
+				});
+			} else {
+				done();
+			}
+        });
+
+        it('it should return a be object', function() {
+            expect(removed).to.equal(true);
+        });
+	});
 	describe('get a collection', function() {
         var collection = null;
 

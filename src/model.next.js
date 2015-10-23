@@ -1,5 +1,5 @@
 /**
- * A base model to handle BE objects.
+ * A base model for BE objects.
  * @class
  */
 export class BEModel {
@@ -42,7 +42,7 @@ export class BEModel {
 }
 
 /**
- * A base model to handle BE collections.
+ * A base model for BE collections.
  * @class
  */
 export class BEArray extends Array {

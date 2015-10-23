@@ -70,9 +70,14 @@ export class BEXhr {
 
 			// done listener
 			oReq.addEventListener('load', function() {
-				var data = oReq.response || oReq.responseText;
+				var data;
+				try {
+					data = oReq.response || oReq.responseText || '';
+				} catch(ex) {
+					//
+				}
 				// try to convert JSON data into object
-				if (data) {
+				if (data && data !== '') {
 					try {
 						data = JSON.parse(data);
 					} catch(er) {

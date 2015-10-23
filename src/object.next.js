@@ -5,18 +5,35 @@ import './methods/all.next.js';
 
 var isoDateRegex = /\d{4,}\-\d{2,}\-\d{2,}T\d{2,}:\d{2,}:\d{2,}\+\d{4,}/;
 
+/**
+ * A generic model for BE objects.
+ * @class
+ */
 export class BEObject extends BEModel {
 
-	constructor(data = {}, conf = {}) {
+	/**
+	 * Set up the model.
+	 * @see {@link BEModel.constructor}.
+	 * @param {Object} data The initial data to set.
+	 * @param {Object} conf An optional set of configuration params.
+	 * @constructor
+	 */
+	constructor(data = {}, conf) {
 		super(conf);
         this.set(data);
     }
 
+	/**
+	 * Perform a BEApi request to populate the model.
+	 * If the current model has not a valid ID or a valid nickname, reject the promise.
+	 * At the end of the request, automatically set fetched data.
+	 * @return {Promise}
+	 */
     fetch() {
         var that = this;
         return new Promise(function(resolve, reject) {
-            if (that.id) {
-                var promise = new BEApi(that._config()).get('objects/' + that.id);
+            if (that.id || that.nickname) {
+                var promise = new BEApi(that._config()).get('objects/' + (that.id || that.nickname));
                 promise.then(function(res) {
                     if (res && res.data && res.data.object) {
                         that.set(res.data.object);
@@ -34,11 +51,19 @@ export class BEObject extends BEModel {
         });
     }
 
+	/**
+	 * Perform a BEApi request to sync the model with the server.
+	 * If the current model has not a valid ID or a valid nickname, a new object will be created.
+	 * At the end of the request, automatically set new fetched data.
+	 * @param {Object} data Optional data to set before save.
+	 * @return {Promise}
+	 */
 	save(data = {}) {
 		var that = this;
-		this.set(data);
-		var dataToSend = this.toJSON( this._modified() );
-			dataToSend.id = this.id;
+		that.set(data);
+		var dataToSend = that.toJSON( that._modified() );
+			dataToSend.id = that.id,
+			dataToSend.nickname = that.nickname;
 		return new Promise(function(resolve, reject) {
 			var promise = new BEApi(that._config()).post('objects', {
 				data: dataToSend
@@ -57,17 +82,76 @@ export class BEObject extends BEModel {
         });
 	}
 
-    set(data) {
+	/**
+	 * A {@link BEObject.save} wrapper for object creation.
+	 * @throws If the model already has a valid ID.
+	 * @param {Object} data Optional data to set before creation.
+	 * @return {Promise}
+	 */
+	create(data = {}) {
+		if (!this.isNew()) {
+			throw 'Object already created.';
+		}
+		return this.save(data);
+	}
+
+	/**
+	 * Perform a BEApi request to delete the object.
+	 * @throws If the model has not a valid ID or a valid nickname.
+	 * @return {Promise}
+	 */
+	remove() {
+		var that = this;
+		if (this.isNew()) {
+			throw 'Object has not a valid ID or a valid nickname.';
+		}
+		return new Promise(function(resolve, reject) {
+			var promise = new BEApi(that._config()).delete('objects/' + (that.id || that.nickname));
+            promise.then(function(res) {
+                resolve();
+            }, function (err) {
+				reject(err);
+            });
+		});
+	}
+
+	/**
+	 * Clone the model.
+	 * @return {BEObject} The clone model.
+	 */
+	clone() {
+		return new BEObject(this.toJSON([], ['id']), this._config());
+	}
+
+	/**
+	 * Check if the model is new (client-side created).
+	 * @return {Boolean}
+	 */
+	isNew() {
+		return (!this.id && !this.nickname);
+	}
+
+	/**
+	 * Set data to the model.
+	 * Automatically create BECollection for children and relations.* fields.
+	 * Automatically create a BEObject for the parent if `parent_id` is specified.
+	 * Automatically convert ISO string dates into {Date} objects.
+	 * Add to the `__modified` the key that needs to be sync with the server.
+	 * @param {Object|String} data A set of data to set or a key to update.
+	 * @param {*} value The value to set to the `data` key string.
+	 * @return {BEObject} The instance.
+	 */
+    set(data = {}, value) {
+		if (value !== undefined && typeof data == 'string') {
+			var key = data;
+			data = {};
+			data[key] = value;
+		}
         var that = this;
         var relations = data.relations || {};
         var children = data.children || {};
-        var relationList = data.relations ? {} : false;
-        var childrenList = data.children ? {} : false;
 
-        var defineRelation = function(name, options) {
-            that.relations[name] = new BECollection(options, that._config());
-        }
-
+		// iterate relations and create BECollection for each key
         for (var k in relations) {
             if (!that.relations) {
                 that.relations = {};
@@ -75,6 +159,11 @@ export class BEObject extends BEModel {
             defineRelation(k, relations[k]);
         }
 
+        function defineRelation(name, options) {
+            that.relations[name] = new BECollection(options, that._config());
+        }
+
+		// create a BECollection for the `children` field
         if (children && !this.children) {
             this.children = new BECollection({
                 url: children.url,
@@ -101,12 +190,14 @@ export class BEObject extends BEModel {
                     d = convert;
                 }
             }
+			// add to modified list
             if (that[k] !== d) {
                 that[k] = d;
 				this._modified(k);
             }
         }
 
+		// create a BEObject for the parent if the defined
         if (data.parent_id) {
             this.parent = new BEObject({
                 id: data.parent_id
@@ -119,15 +210,34 @@ export class BEObject extends BEModel {
         return that;
     }
 
+	/**
+	 * Check if the model match a filter.
+	 * @param {Object|String|RegExp} filter The filter to use. Could be any dataset, a simple string, or a regular expression.
+	 * @return {Boolean}
+	 */
     is(filter) {
-        if (typeof filter == 'object') {
+		var data = this.toJSON();
+		if (filter instanceof RegExp) {
+			for (var k in data) {
+				if (data[k].match(filter)) {
+					return true;
+				}
+			}
+        } else if (typeof filter == 'string') {
+			var regex = new RegExp(filter);
+			for (var k in data) {
+				if (data[k].match(regex)) {
+					return true;
+				}
+			}
+		} else if (typeof filter == 'object') {
             for (var k in filter) {
-                if (filter[k] !== this[k]) {
+                if (filter[k] !== data[k]) {
                     return false;
                 }
             }
             return true;
-        }
+		}
         return false;
     }
 
@@ -146,11 +256,18 @@ export class BEObject extends BEModel {
 		return queue;
 	}
 
-	toJSON(keys) {
+	toJSON(keep, remove) {
 		var res = {},
 			data = this;
+
+		if (!Array.isArray(keep)) {
+			keep = [];
+		}
+		if (!Array.isArray(remove)) {
+			remove = [];
+		}
 		for (var k in data) {
-			if (BEObject.unsetFromData.indexOf(k) === -1 && typeof data[k] !== 'function' && (!keys || !Array.isArray(keys) || keys.indexOf(k) !== -1)) {
+			if (BEObject.unsetFromData.indexOf(k) === -1 && typeof data[k] !== 'function' && (!keep || !keep.length || keep.indexOf(k) !== -1) && (!remove || !remove.length || remove.indexOf(k) === -1)) {
 				res[k] = data[k];
 			}
 		}
