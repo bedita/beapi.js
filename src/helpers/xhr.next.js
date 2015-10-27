@@ -1,6 +1,6 @@
 /**
- * XMLHttpRequest wrapper for the browser.
- * @class
+ * @class BEXhr
+ * @classdesc XMLHttpRequest wrapper for the browser.
  */
 export class BEXhr {
 
@@ -32,6 +32,7 @@ export class BEXhr {
 	 * Set a custom the Ajax interface.
 	 * Set an alternative Ajax interface compatible with a `XMLHttpRequest` like pattern {@link https://developer.mozilla.org/it/docs/Web/API/XMLHttpRequest}.
 	 * @static
+	 * @private
 	 * @param {Class} xhr A valid and compatible Ajax interface.
 	 */
 	static set xhr(xhr) {

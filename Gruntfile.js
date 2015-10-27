@@ -16,10 +16,11 @@ grunt.initConfig({
             files: {
                 'dist/beapi.js': [
                     'src/index.next.js',
-                    'src/model.next.js',
+                    'src/models.next.js',
                     'src/collection.next.js',
                     'src/object.next.js',
-                    'src/xhr.next.js',
+                    'src/helpers/xhr.next.js',
+                    'src/registry.next.js',
                     'src/beapi.next.js',
                     'src/beapi.queue.next.js',
                     'src/methods/**/*.next.js'
@@ -30,10 +31,11 @@ grunt.initConfig({
             files: {
                 '.tmp/beapi.js': [
                     'src/index.next.js',
-                    'src/model.next.js',
+                    'src/models.next.js',
                     'src/collection.next.js',
                     'src/object.next.js',
-                    'src/xhr.next.js',
+                    'src/helpers/xhr.next.js',
+                    'src/registry.next.js',
                     'src/beapi.next.js',
                     'src/beapi.queue.next.js',
                     'src/methods/**/*.next.js'
@@ -92,9 +94,14 @@ grunt.initConfig({
     },
     jsdoc2md: {
         docs: {
-            files: [
-                { src: 'src/ajax.next.js', dest: 'docs/ajax.md' }
-            ]
+            files: [{
+                expand: true,
+                src: ['src/**/*.next.js', '!src/index.next.js', '!src/methods/all.next.js'],
+                dest: 'docs',
+                rename: function (dest, src) {
+                    return src.replace('src', dest).replace('.next.js', '.md');
+                }
+            }]
         }
     },
     karma: {
@@ -115,6 +122,6 @@ grunt.initConfig({
 
 grunt.registerTask('build', ['clean:dist', 'clean:tmp', 'concat:dist', 'replace:dist', 'babel:dist', 'uglify:dist']);
 
-// grunt.registerTask('docs', ['clean:docs', 'jsdoc2md:docs']);
-//
+grunt.registerTask('doc', ['clean:docs', 'jsdoc2md:docs']);
+
 grunt.registerTask('tests', ['clean:tmp', 'concat:test', 'replace:test', 'babel:test', 'karma', 'clean:tmp'])

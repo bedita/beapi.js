@@ -1,4 +1,5 @@
-import { BEXhr } from './xhr.next.js';
+import { BEXhr } from './helpers/xhr.next.js';
+import { BERegistry } from './registry.next.js';
 
 /**
  * Convenience method to process request arguments
@@ -34,63 +35,14 @@ function _extend(res = {}, ...args) {
 }
 
 /**
- * A registry of BEApi configuration.
- * Everywhere, in your JavaScript application, you can use `BEApiRegistry.getInstance(key)` to retrieve a BEApi configration.
- * Register BEApi configurations is lighter and simpler than register instances.
- * Use BEApiRegistry to share configuration between models, interfaces and queues.
- * @class
- */
-export class BEApiRegistry {
-
-	/**
-	 * Add a configuration using the provided key.
-	 * @param {String} key The key to use to register the configuration.
-	 * @param {Object} conf The configuration.
-	 */
-	static add(key, conf = {}) {
-		BEApiRegistry._instances = BEApiRegistry._instances || {};
-		BEApiRegistry._instances[key] = conf;
-	}
-
-	/**
-	 * Retrieve a configuration using the provided key.
-	 * @param {String} key The key to use to read the configuration.
-	 * @return {Object} The configuration.
-	 */
-	static getInstance(key) {
-		BEApiRegistry._instances = BEApiRegistry._instances || {};
-		if (typeof BEApiRegistry._instances[key] !== 'undefined') {
-			return BEApiRegistry._instances[key];
-		}
-	}
-
-	/**
-	 * Remove a configuration using the provided key.
-	 * @param {String} key The key to use to remove the configuration.
-	 * @return {Boolean} If the configuration exists, return `true` after remotion, otherwise return `false`.
-	 */
-	static remove(key) {
-		BEApiRegistry._instances = BEApiRegistry._instances || {};
-		if (typeof BEApiRegistry._instances[key] !== 'undefined') {
-			delete BEApiRegistry._instances[key];
-			return true;
-		}
-		return false;
-	}
-
-}
-
-/**
- * Create an interface to communicate with a BEdita API frontend.
- * @class
+ * @class BEApi
+ * @classdesc Create an interface to communicate with a BEdita API frontend.
+ *
+ * @description Instantiate a BEApi Object.
+ * @param {Object} conf A set of options.
  */
 export class BEApi {
 
-	/**
-	 * Instantiate a BEApi Object.
-	 * @constructor
-	 * @param {Object} conf A set of options.
-	 */
 	constructor(conf = {}) {
 		/**
 		 * A set of options.
@@ -223,7 +175,7 @@ export class BEApi {
 
 	/**
 	 * Perform the Ajax request for Authentication.
-	 * - Automatically store Access Token, Refresh Token and Expire Date to the storage (@see {@link BEApi.storage}).
+	 * - Automatically store Access Token, Refresh Token and Expire Date to the storage (@see {@link BEApi#storage}).
 	 * @private
 	 * @param {Object} opt A complete set of options to pass to the Ajax request.
 	 * @return {Promise} The Ajax request Promise.
@@ -323,7 +275,7 @@ export class BEApi {
 	/**
 	 * Perform an API Auth request.
 	 * - Use {@link _processAuth}
-	 * - Automatically store Access Token to the storage (@see {@link BEApi.storage}).
+	 * - Automatically store Access Token to the storage (@see {@link BEApi#storage}).
 	 * @param {String} username The username.
 	 * @param {String} password The user's password.
 	 * @return {Promise} The Ajax request Promise.
@@ -341,7 +293,7 @@ export class BEApi {
 	/**
 	 * Perform an API Refresh Token request.
 	 * - Use {@link _processAuth}
-	 * - Retrieve Access Token from the storage (@see {@link BEApi.storage}).
+	 * - Retrieve Access Token from the storage (@see {@link BEApi#storage}).
 	 * @return {Promise} The Ajax request Promise.
 	 */
     refreshToken() {
@@ -360,7 +312,7 @@ export class BEApi {
 
 	/**
 	 * Perform an API Logout request.
-	 * - Remove all BEApi data from the storage (@see {@link BEApi.storage}).
+	 * - Remove all BEApi data from the storage (@see {@link BEApi#storage}).
 	 * @return {Promise} The Ajax request Promise.
 	 */
     logout() {
@@ -381,7 +333,7 @@ export class BEApi {
     }
 
 	/**
-	 * Retrieve Access Token from the storage (@see {@link BEApi.storage}).
+	 * Retrieve Access Token from the storage (@see {@link BEApi#storage}).
 	 * @return {String} The Access Token
 	 */
     getAccessToken() {
@@ -389,7 +341,7 @@ export class BEApi {
     }
 
 	/**
-	 * Retrieve Refresh Token from the storage (@see {@link BEApi.storage}).
+	 * Retrieve Refresh Token from the storage (@see {@link BEApi#storage}).
 	 * @return {String} The Refresh Token
 	 */
     getRefreshToken() {
@@ -397,7 +349,7 @@ export class BEApi {
     }
 
 	/**
-	 * Retrieve Access Token Expire Date from the storage (@see {@link BEApi.storage}).
+	 * Retrieve Access Token Expire Date from the storage (@see {@link BEApi#storage}).
 	 * @return {Date} The Access Token Expire Date
 	 */
     getAccessTokenExpireDate() {
@@ -439,6 +391,7 @@ export class BEApi {
 	/**
 	 * Set a custom the storage interface.
 	 * Set an alternative storage interface with the same LocalStorage API (`setItem`, `getItem` and `removeItem`)
+	 * @private
 	 * @static
 	 */
 	static set storage(storage) {
@@ -465,6 +418,7 @@ export class BEApi {
 	 * Set a custom the Ajax interface.
 	 * Set an alternative Ajax interface compatible with a `jQuery.ajax` like pattern {@link http://api.jquery.com/jquery.ajax/}
 	 * @static
+	 * @private
 	 * @param {Class} xhr A valid and compatible Ajax interface.
 	 */
 	static set xhr(xhr) {

@@ -1,42 +1,14 @@
 import { BEApi } from './beapi.next.js';
 
 /**
- * Create a task model to insert into a BEApiQueue.
- * @class
- */
-export class BEApiQueueTask {
-
-	/**
-	 * Instantiate a BEApiQueueTask Object.
-	 * @constructor
-	 * @param {Function} method A BEApiQueue Method class constructor.
-	 * @param {Array} args The list of arguments to pass to the BEApiQueue Method constructor
-	 */
-	constructor(method, args = []) {
-		if (method) {
-			this.fn = method;
-		}
-		this.args = args;
-		// instantiate the task local promise
-		this.promise = new Promise((resolve, reject) => {
-			this.resolve = resolve;
-			this.reject = reject;
-		});
-	}
-
-}
-
-/**
- * Create a chainable queue of BEApi requests.
- * @class
+ * @class BEApiQueue
+ * @classdesc Create a chainable queue of BEApi requests.
+ *
+ * @description Instantiate a BEApiQueue Object.
+ * @param {String|Object|BEApi} conf A set of options or a configuration key for BEApiRegistry.
  */
 export class BEApiQueue {
 
-	/**
-	 * Instantiate a BEApiQueue Object.
-	 * @constructor
-	 * @param {String|Object|BEApi} conf A set of options or a configuration key for BEApiRegistry.
-	 */
 	constructor(conf) {
 		if (typeof conf === 'string') {
 			// if conf is a string, try to read configuration from BEApiRegistry
@@ -144,7 +116,7 @@ export class BEApiQueue {
 
 	/**
 	 * Alias of `BEApiQueue.exec`.
-	 * @see {@link BEApiQueue.exec}
+	 * @see {@link BEApiQueue#exec}
 	 */
 	get() {
 		return this.exec();
@@ -173,7 +145,7 @@ export class BEApiQueue {
 	/**
 	 * Alias of the last task in queue `promise.then`.
 	 * Attach a success and/or fail callback to the last added task.
-	 * If the queue is empty, the method `BEApiQueue.all` {@link BEApiQueue.all} is called instead.
+	 * If the queue is empty, the method `BEApiQueue.all` {@link BEApiQueue#all} is called instead.
 	 * @param {Function} done The success callback [optional].
 	 * @param {Function} fail The fail callback [optional].
 	 * @return {Promise} The last task promise or the global promise.
@@ -225,8 +197,35 @@ export class BEApiQueue {
 }
 
 /**
- * Abstract class for `BEApiQueue Method`s.
- * @class
+ * @class BEApiQueueTask
+ * @classdesc Create a task model to insert into a BEApiQueue.
+ *
+ * @description Instantiate a BEApiQueueTask Object.
+ * @param {Function} method A BEApiQueue Method class constructor.
+ * @param {Array} args The list of arguments to pass to the BEApiQueue Method constructor
+ */
+export class BEApiQueueTask {
+
+	constructor(method, args = []) {
+		if (method) {
+			this.fn = method;
+		}
+		this.args = args;
+		// instantiate the task local promise
+		this.promise = new Promise((resolve, reject) => {
+			this.resolve = resolve;
+			this.reject = reject;
+		});
+	}
+
+}
+
+
+/**
+ * @class BEApiQueueBaseMethod
+ * @classdesc Abstract class for `BEApiQueue Method`s.
+ *
+ * @description Initialize a `BEApiQueue Method`.
  */
 export class BEApiQueueBaseMethod {
 
@@ -239,10 +238,6 @@ export class BEApiQueueBaseMethod {
 		return 'get';
 	}
 
-	/**
-	 * Initialize a `BEApiQueue Method`.
-	 * @constructor
-	 */
 	constructor(options = {}) {
 		this.options = options;
 	}

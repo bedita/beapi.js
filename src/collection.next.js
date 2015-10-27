@@ -1,8 +1,10 @@
-import { BEArray } from './model.next.js';
+import { BEArray } from './models.nextjs';
 import { BEApi } from './beapi.next.js';
-import { BEApiQueue } from './beapi.queue.next.js';
-import './methods/all.next.js';
 
+/**
+ * @class BECollection
+ * @classdesc A generic model for BE collections.
+ */
 export class BECollection extends BEArray {
 
 	constructor(options = {}, conf = {}) {

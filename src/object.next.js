@@ -1,21 +1,19 @@
-import { BEModel } from './model.next.js';
+import { BEModel } from './models.nextjs';
 import { BEApi } from './beapi.next.js';
 import { BEApiQueue } from './beapi.queue.next.js';
 import './methods/all.next.js';
 
 /**
- * A generic model for BE objects.
- * @class
+ * @class BEObject
+ * @classdesc A generic model for BE objects.
+ *
+ * @description Set up the model.
+ * @see {@link BEModel.constructor}.
+ * @param {Object} data The initial data to set.
+ * @param {Object} conf An optional set of configuration params.
  */
 export class BEObject extends BEModel {
 
-	/**
-	 * Set up the model.
-	 * @see {@link BEModel.constructor}.
-	 * @param {Object} data The initial data to set.
-	 * @param {Object} conf An optional set of configuration params.
-	 * @constructor
-	 */
 	constructor(data = {}, conf) {
 		super(conf);
         this.set(data);

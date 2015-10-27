@@ -1,13 +1,12 @@
 /**
- * A base model for BE objects.
- * @class
+ * @class BEModel
+ * @classdesc A base model for BE objects.
+ *
+ * @description Instantiate config properties.
+ * @param {Object} conf A configuration set.
  */
 export class BEModel {
-	/**
-	 * Instantiate config properties.
-	 * @param {Object} conf A configuration set.
-	 * @constructor
-	 */
+
 	constructor(conf) {
 		this.__config = conf;
 		this.__modified = [];
@@ -42,16 +41,15 @@ export class BEModel {
 }
 
 /**
- * A base model for BE collections.
- * @class
+ * @class BEArray
+ * @classdesc A base model for BE collections.
+ *
+ * @description Instantiate items and config properties.
+ * @param {Array} items A list of `BEModel` objects.
+ * @param {Object} conf A configuration set.
  */
 export class BEArray extends Array {
-	/**
-	 * Instantiate items and config properties.
-	 * @param {Array} items A list of `BEModel` objects.
-	 * @param {Object} conf A configuration set.
-	 * @constructor
-	 */
+
 	constructor(items, conf) {
 		super(items);
 		this.__config = conf;
