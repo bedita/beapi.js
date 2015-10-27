@@ -194,54 +194,42 @@ var listening = new BECollection({ items: [] }, { baseUrl: 'https://bedita.com/a
 - **forEach(*callback*)**: iterate Collection items.
 - **filter(*filter*)**: get an Array of filtered objects.
 
-## Build
+## Build, test and release
 
 ### Prerequisites:
 
 - Install [nodejs](https://nodejs.org/)
 - Install [babel](https://babeljs.io)
+- Install [grunt](http://gruntjs.com/)
 
-		npm install babel -g
+		npm install babel grunt  -g
+
+- Install project dependencies
+
+		cd path/to/project
+		npm install
+
 
 ### Build
 
-```
-npm run build
-```
+Navigate to the project path and run:
+
+		npm run build
+
 
 ### Release
 
-```
-npm run release X.X.X
-```
-
-## Running tests
-
-### Prerequisites:
-
-- Install [nodejs](https://nodejs.org/)
-- Install [mocha](https://mochajs.org/)
-
-		npm install mocha -g
-
-### Install dependencies
-
 Navigate to the project path and run:
 
-```
-npm install
-```
+		npm run release X.X.X
 
-### Configuration
 
-Use `tests/test.json.sample` as footprint for you configuration:
+### Running tests
 
-```
-mv tests/test.json.sample tests/test.json
-```
+Configure your test environment, using `tests/conf.js.sample` as footprint for you configuration:
 
-### Run the tests
+		mv tests/conf.js.sample tests/conf.js
 
-```
-npm run tests
-```
+Then run:
+
+		npm run tests
