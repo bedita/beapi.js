@@ -10,14 +10,13 @@ export class BEApiQueueIdentity extends BEApiQueueBaseMethod {
 	}
 
 	validate() {
-		return new Promise(function (resolve) {
+		return new Promise(resolve) => {
 			resolve();
 		});
 	}
 
 	input(scope) {
-		var self = this;
-		return new Promise(function (resolve) {
+		return new Promise(resolve) => {
 			resolve([
 				{
 					url: '/'
@@ -27,9 +26,8 @@ export class BEApiQueueIdentity extends BEApiQueueBaseMethod {
 	}
 
 	transform(scope, res) {
-		var self = this;
-		return new Promise(function (resolve, reject) {
-			resolve(self.options.data);
+		return new Promise(resolve, reject) => {
+			resolve(this.options.data);
 		});
 	}
 

@@ -1,7 +1,5 @@
 import { BEApi } from './beapi.next.js';
 
-var noop = function () {}
-
 /**
  * Create a task model to insert into a BEApiQueue.
  * @class
@@ -15,7 +13,6 @@ export class BEApiQueueTask {
 	 * @param {Array} args The list of arguments to pass to the BEApiQueue Method constructor
 	 */
 	constructor(method, args = []) {
-		var self = this;
 		if (method) {
 			self.fn = method;
 		}
@@ -23,9 +20,9 @@ export class BEApiQueueTask {
 			self.args = args;
 		}
 		// instantiate the task local promise
-		self.promise = new Promise(function (resolve, reject) {
-			self.resolve = resolve;
-			self.reject = reject;
+		this.promise = new Promise((resolve, reject) => {
+			this.resolve = resolve;
+			this.reject = reject;
 		});
 	}
 
@@ -43,7 +40,6 @@ export class BEApiQueue {
 	 * @param {String|Object|BEApi} conf A set of options or a configuration key for BEApiRegistry.
 	 */
 	constructor(conf) {
-		var that = this;
 		if (typeof conf === 'string') {
 			// if conf is a string, try to read configuration from BEApiRegistry
 			this.conf = BEApiRegistry.getInstance(conf);
@@ -57,9 +53,9 @@ export class BEApiQueue {
 			throw 'No BEApi configuration provided.'
 		}
 		// setup the global promise and resolvers
-		this._promise = new Promise(function (resolve, reject) {
-			that._resolver = resolve;
-			that._rejecter = reject;
+		this._promise = new Promise((resolve, reject) => {
+			this._resolver = resolve;
+			this._rejecter = reject;
 		});
 		this.reset();
 	}
@@ -88,15 +84,14 @@ export class BEApiQueue {
 	 * @return {Promise} the global promise
 	 */
 	exec() {
-		var self = this,
-			queue = this.queue,
+		var queue = this.queue,
 			beapi = new BEApi(this.conf),
 			scope;
 
 		// let's start the queue!
-		_exec(queue);
+		_exec(this, queue);
 
-		function _exec(queue, index) {
+		function _exec(self, queue, index) {
 			index = index || 0;
 			if (index == queue.length) {
 				// if iterator reached the end of the queue, resolve the global promise
@@ -111,7 +106,7 @@ export class BEApiQueue {
 				traskInstance = new BEApiQueue.tasks[method](...args);
 
 			// process the input arguments using task instance `input` method
-			traskInstance.input.call(traskInstance, scope).then(function (options) {
+			traskInstance.input.call(traskInstance, scope).then((options) => {
 				// perform the Ajax request using the BEApi instance
 				// `done` and `fail` callbacks both will be process by the local `onLoad` function
 				let ajaxMethod = traskInstance.type.toLowerCase();
@@ -122,23 +117,23 @@ export class BEApiQueue {
 
 			function onLoad (res) {
 				// validate the request result using task instance `validate` method
-				traskInstance.validate(res).then(function () {
+				traskInstance.validate(res).then(() => {
 					// if validation is succeeded, process the result using task instance `transform` method.
 					// The `transform` function of a BEApiQueue Method performs some changes to the request result
 					// and to the scope object.
-					traskInstance.transform(scope, res).then(function (obj) {
+					traskInstance.transform(scope, res).then((obj) => {
 						// update the scope
 						scope = obj;
 						// resolve the task promise
 						resolver(scope);
 						// execute the next task!
-						_exec(queue, index + 1);
-					}, function (err) {
+						_exec(self, queue, index + 1);
+					}, (err) => {
 						// if transformation fails, reject both task and global promises and stop the queue
 						rejecter(scope);
 						self._rejecter(err);
 					});
-				}, function (err) {
+				}, (err) => {
 					// if validation fails, reject both task and global promises and stop the queue
 					rejecter(scope);
 					self._rejecter(err);
@@ -187,9 +182,9 @@ export class BEApiQueue {
 	 */
 	then(done, fail) {
 		if (this.queue.length) {
-			return this.last().promise.then(done || noop, fail || noop);
+			return this.last().promise.then(done || BEApiQueue.__noop, fail || BEApiQueue.__noop);
 		} else {
-			return this.all(done || noop, fail || noop);
+			return this.all(done || BEApiQueue.__noop, fail || BEApiQueue.__noop);
 		}
 	}
 
@@ -202,7 +197,7 @@ export class BEApiQueue {
 	 */
 	all(done, fail) {
 		if (this._promise) {
-			return this._promise.then(done || noop, fail || noop);
+			return this._promise.then(done || BEApiQueue.__noop, fail || BEApiQueue.__noop);
 		}
 	}
 
@@ -227,6 +222,8 @@ export class BEApiQueue {
 			}
 		})(taskName);
 	}
+
+	static __noop() {}
 }
 
 /**
@@ -259,7 +256,7 @@ export class BEApiQueueBaseMethod {
 	 * @return {Promise} A promise resolved when all inputs are processed.
 	 */
 	input(scope, ...args) {
-		return new Promise(function (resolve) {
+		return new Promise((resolve) => {
 			resolve(args);
 		});
 	}
@@ -270,7 +267,7 @@ export class BEApiQueueBaseMethod {
 	 * @return {Promise} A promise resolved when the response is validated.
 	 */
 	validate(res) {
-		return new Promise(function (resolve, reject) {
+		return new Promise((resolve, reject) => {
 			if (res && res.data && (!res.status || (res.status >= 200 && res.status < 300))) {
 				resolve();
 			} else {
@@ -286,7 +283,7 @@ export class BEApiQueueBaseMethod {
 	 * @return {Promise} A promise resolved when scope changes are finished.
 	 */
 	transform(scope, res) {
-		return new Promise(function (resolve) {
+		return new Promise((resolve) => {
 			resolve(scope);
 		});
 	}

@@ -3,8 +3,6 @@ import { BEApi } from './beapi.next.js';
 import { BEApiQueue } from './beapi.queue.next.js';
 import './methods/all.next.js';
 
-var isoDateRegex = /\d{4,}\-\d{2,}\-\d{2,}T\d{2,}:\d{2,}:\d{2,}\+\d{4,}/;
-
 /**
  * A generic model for BE objects.
  * @class
@@ -30,18 +28,17 @@ export class BEObject extends BEModel {
 	 * @return {Promise}
 	 */
     fetch() {
-        var that = this;
-        return new Promise(function(resolve, reject) {
-            if (that.id || that.nickname) {
-                var promise = new BEApi(that._config()).get('objects/' + (that.id || that.nickname));
-                promise.then(function(res) {
+        return new Promise((resolve, reject) => {
+            if (this.id || this.nickname) {
+                let promise = new BEApi(this._config()).get('objects/' + (this.id || this.nickname));
+                promise.then((res) => {
                     if (res && res.data && res.data.object) {
-                        that.set(res.data.object);
-						that._modified(false);
+                        this.set(res.data.object);
+						this._modified(false);
                     } else {
 						reject(res);
 					}
-                }, function (err) {
+                }, (err) => {
 					reject(err);
                 });
                 return promise;
@@ -59,24 +56,23 @@ export class BEObject extends BEModel {
 	 * @return {Promise}
 	 */
 	save(data = {}) {
-		var that = this;
-		that.set(data);
-		var dataToSend = that.toJSON( that._modified() );
-			dataToSend.id = that.id,
-			dataToSend.nickname = that.nickname;
-		return new Promise(function(resolve, reject) {
-			var promise = new BEApi(that._config()).post('objects', {
+		this.set(data);
+		let dataToSend = this.toJSON( this._modified() );
+			dataToSend.id = this.id,
+			dataToSend.nickname = this.nickname;
+		return new Promise((resolve, reject) => {
+			let promise = new BEApi(this._config()).post('objects', {
 				data: dataToSend
 			});
-            promise.then(function(res) {
+            promise.then((res) => {
                 if (res && res.data && res.data.object) {
-                    that.set(res.data.object);
-					that._modified(false);
+                    this.set(res.data.object);
+					this._modified(false);
 					resolve(res);
                 } else {
 					reject(res);
 				}
-            }, function (err) {
+            }, (err) => {
 				reject(err);
             });
         });
@@ -101,12 +97,11 @@ export class BEObject extends BEModel {
 	 * @return {Promise}
 	 */
 	remove() {
-		var that = this;
 		if (this.isNew()) {
 			throw 'Object has not a valid ID or a valid nickname.';
 		}
-		return new Promise(function(resolve, reject) {
-			var promise = new BEApi(that._config()).delete('objects/' + (that.id || that.nickname));
+		return new Promise((resolve, reject) => {
+			let promise = new BEApi(this._config()).delete('objects/' + (this.id || this.nickname));
             promise.then(function(res) {
                 resolve();
             }, function (err) {
@@ -143,24 +138,20 @@ export class BEObject extends BEModel {
 	 */
     set(data = {}, value) {
 		if (value !== undefined && typeof data == 'string') {
-			var key = data;
+			let key = data;
 			data = {};
 			data[key] = value;
 		}
-        var that = this;
-        var relations = data.relations || {};
-        var children = data.children || {};
+        let relations = data.relations || {};
+        let children = data.children || {};
+		let isoDateRegex = /\d{4,}\-\d{2,}\-\d{2,}T\d{2,}:\d{2,}:\d{2,}\+\d{4,}/;
 
 		// iterate relations and create BECollection for each key
-        for (var k in relations) {
-            if (!that.relations) {
-                that.relations = {};
+        for (let k in relations) {
+            if (!this.relations) {
+                this.relations = {};
             }
-            defineRelation(k, relations[k]);
-        }
-
-        function defineRelation(name, options) {
-            that.relations[name] = new BECollection(options, that._config());
+			this.relations[k] = new BECollection(relations[k], this._config());
         }
 
 		// create a BECollection for the `children` field
@@ -168,7 +159,7 @@ export class BEObject extends BEModel {
             this.children = new BECollection({
                 url: children.url,
                 count: children.count
-            }, that._config());
+            }, this._config());
             if (children.sections) {
                 this.sections = new BECollection({
                     alias: this.children,
@@ -177,22 +168,22 @@ export class BEObject extends BEModel {
                     },
                     url: children.sections.url,
                     count: children.sections
-                }, that._config());
+                }, this._config());
             }
         }
 
-        for (var k in data) {
-            var d = data[k];
+        for (let k in data) {
+            let d = data[k];
             //check if iso date
             if (typeof d == 'string' && d.length == 24 && isoDateRegex.test(d)) {
-                var convert = new Date(d);
+                let convert = new Date(d);
                 if (!isNaN(convert.valueOf())) {
                     d = convert;
                 }
             }
 			// add to modified list
-            if (that[k] !== d) {
-                that[k] = d;
+            if (this[k] !== d) {
+                this[k] = d;
 				this._modified(k);
             }
         }
@@ -207,7 +198,7 @@ export class BEObject extends BEModel {
             delete this.parent;
         }
 
-        return that;
+        return this;
     }
 
 	/**
@@ -216,22 +207,22 @@ export class BEObject extends BEModel {
 	 * @return {Boolean}
 	 */
     is(filter) {
-		var data = this.toJSON();
+		let data = this.toJSON();
 		if (filter instanceof RegExp) {
-			for (var k in data) {
+			for (let k in data) {
 				if (data[k].match(filter)) {
 					return true;
 				}
 			}
         } else if (typeof filter == 'string') {
-			var regex = new RegExp(filter);
-			for (var k in data) {
+			let regex = new RegExp(filter);
+			for (let k in data) {
 				if (data[k].match(regex)) {
 					return true;
 				}
 			}
 		} else if (typeof filter == 'object') {
-            for (var k in filter) {
+            for (let k in filter) {
                 if (filter[k] !== data[k]) {
                     return false;
                 }
@@ -242,22 +233,21 @@ export class BEObject extends BEModel {
     }
 
 	query() {
-		var that = this;
-		var queue = new BEApiQueue(this._config());
+		let queue = new BEApiQueue(this._config());
 		if ('id' in this && 'nickname' in this) {
 			queue.identity(this);
 		} else {
 			queue.objects(this.id || this.nickname);
 		}
-		queue.all(function (scope) {
-			that.set(scope);
-			that._modified(false);
+		queue.all((scope) => {
+			this.set(scope);
+			this._modified(false);
 		});
 		return queue;
 	}
 
 	toJSON(keep, remove) {
-		var res = {},
+		let res = {},
 			data = this;
 
 		if (!Array.isArray(keep)) {
@@ -266,7 +256,7 @@ export class BEObject extends BEModel {
 		if (!Array.isArray(remove)) {
 			remove = [];
 		}
-		for (var k in data) {
+		for (let k in data) {
 			if (BEObject.unsetFromData.indexOf(k) === -1 && typeof data[k] !== 'function' && (!keep || !keep.length || keep.indexOf(k) !== -1) && (!remove || !remove.length || remove.indexOf(k) === -1)) {
 				res[k] = data[k];
 			}

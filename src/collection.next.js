@@ -7,7 +7,7 @@ export class BECollection extends BEArray {
 
 	constructor(options = {}, conf = {}) {
 		super([], conf);
-		var items = [];
+		let items = [];
         if (options.alias) {
             this.alias = options.alias;
 			if (options.filter) {
@@ -35,23 +35,22 @@ export class BECollection extends BEArray {
 	}
 
     fetch(url) {
-        var that = this;
-        return new Promise(function(resolve, reject) {
-            if (that.url || url) {
-                if (that.alias) {
-                    return that.alias.fetch(that.url || url || undefined);
+        return new Promise((resolve, reject) => {
+            if (this.url || url) {
+                if (this.alias) {
+                    return this.alias.fetch(this.url || url || undefined);
                 }
-				that.splice(0, that.length);
-				var beapi = new BEApi(that._config());
-                beapi.get(that.url || url).then(function(res) {
+				this.splice(0, this.length);
+				let beapi = new BEApi(this._config());
+                beapi.get(this.url || url).then((res) => {
                     if (res && res.data && res.data.objects) {
-                        for (var i = 0; i < res.data.objects.length; i++) {
-                            var obj = res.data.objects[i];
-							that.push(obj);
+                        for (let i = 0; i < res.data.objects.length; i++) {
+                            let obj = res.data.objects[i];
+							this.push(obj);
                         }
                     }
                     resolve.apply(this, arguments);
-                }, function() {
+                }, (err) => {
                     reject.apply(this, arguments);
                 });
             } else {
@@ -61,9 +60,7 @@ export class BECollection extends BEArray {
     }
 
 	filter(f) {
-		return Array.prototype.filter.call(this, function(item) {
-			return item.is(f);
-		});
+		return Array.prototype.filter.call(this, (item) => item.is(f));
 	}
 
 	toArray() {

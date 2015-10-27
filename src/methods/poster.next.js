@@ -7,13 +7,12 @@ class BEApiQueuePoster extends BEApiQueueBaseMethod {
 	}
 
 	input(scope) {
-		var self = this;
-		return new Promise(function (resolve) {
+		return new Promise((resolve) => {
 			var suffix = '';
-			if (self.options) {
+			if (this.options) {
 				suffix = '?';
-				for (var k in self.options) {
-					suffix += k + '=' + self.options[k];
+				for (var k in this.options) {
+					suffix += k + '=' + this.options[k];
 				}
 			}
 			resolve([
@@ -25,8 +24,7 @@ class BEApiQueuePoster extends BEApiQueueBaseMethod {
 	}
 
 	transform(scope, res) {
-		var self = this;
-		return new Promise(function (resolve, reject) {
+		return new Promise((resolve, reject) => {
 			if (res && res.data) {
 				scope['poster'] = res.data;
 			}

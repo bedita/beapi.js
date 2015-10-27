@@ -64,7 +64,7 @@ export class BEXhr {
         }
 		opt.type = opt.type.toUpperCase();
 		// setup a Promise
-		return new Promise(function(resolve, reject) {
+		return new Promise((resolve, reject) => {
 			// instantiate the Ajax interface (@see {@link BEXhr.xhr})
 			var oReq = new BEXhr.xhr();
 
@@ -92,11 +92,11 @@ export class BEXhr {
 			}, false);
 
 			// error listeners
-			oReq.addEventListener('error', function() {
+			oReq.addEventListener('error', () => {
 				reject(oReq);
 			}, false);
 
-			oReq.addEventListener('abort', function() {
+			oReq.addEventListener('abort', () => {
 				reject(oReq);
 			}, false);
 

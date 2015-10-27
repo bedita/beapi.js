@@ -10,18 +10,17 @@ class BEApiQueueObjects extends BEApiQueueBaseMethod {
 	}
 
 	input(scope) {
-		var self = this;
-		return new Promise(function (resolve) {
+		return new Promise((resolve) => {
 			resolve([
 				{
-					url: (self.options.type ? self.options.type + 's' : 'objects') + (self.options.id ? '/' + self.options.id : '')
+					url: (this.options.type ? this.options.type + 's' : 'objects') + (this.options.id ? '/' + this.options.id : '')
 				}
 			]);
 		})
 	}
 
 	transform(scope, res) {
-		return new Promise(function (resolve, reject) {
+		return new Promise((resolve, reject) => {
 			if (res.data.object) {
 				scope = res.data.object;
 			}

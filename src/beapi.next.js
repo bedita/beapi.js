@@ -24,9 +24,9 @@ function _processInput(conf = {}) {
  * @return {Object} The extended object.
  */
 function _extend(res = {}, ...args) {
-    for (var i = 0; i < args.length; i++) {
-        var obj = args[i];
-        for (var k in obj) {
+    for (let i = 0; i < args.length; i++) {
+        let obj = args[i];
+        for (let k in obj) {
             res[k] = obj[k];
         }
     }
@@ -101,7 +101,7 @@ export class BEApi {
 		 * @property {String} refreshTokenKey		The storage key to use for Refresh Token when using auth methods.
 		 * @property {String} accessTokenExpireDate The storage key to use for Access Token Expire Date when using auth methods.
 		 */
-		var opt = {
+		let opt = {
 			baseUrl: undefined,
 			accessTokenKey: 'be_access_token',
 		    refreshTokenKey: 'be_refresh_token',
@@ -109,7 +109,7 @@ export class BEApi {
 			configKey: this.defaultConfigKey
 		}
 
-        for (var k in conf) {
+        for (let k in conf) {
             opt[k] = conf[k];
         }
 
@@ -161,12 +161,12 @@ export class BEApi {
 	 * @return {Object} A complete set of options.
 	 */
 	_processOptions(opt) {
-		var res = this.conf;
-		for (var k in opt) {
+		let res = this.conf;
+		for (let k in opt) {
             res[k] = opt[k];
         }
 
-		var url = res.url || '/',
+		let url = res.url || '/',
 			accessToken = this.getAccessToken();
 
 		// check if the provided url is a complete
@@ -203,13 +203,13 @@ export class BEApi {
 	 */
 	_processXHR(opt = {}) {
         if (this.getAccessToken() && this.isTokenExpired()) {
-            return new Promise(function(resolve, reject) {
-                var doXHR = function() {
+            return new Promise((resolve, reject) => {
+                let doXHR = function() {
                     delete opt.headers['Authorization'];
                     opt = this._processOptions(opt);
-                    BEXhr.exec(opt).then(function() {
+                    BEXhr.exec(opt).then(() => {
                         resolve.apply(this, arguments);
-                    }, function() {
+                    }, () => {
                         reject.apply(this, arguments);
                     });
                 }
@@ -229,11 +229,10 @@ export class BEApi {
 	 */
 	_processAuth(opt = {}) {
         opt.url = 'auth';
-        var self = this,
-			storage = BEApi.storage,
+        let storage = BEApi.storage,
 			conf = this.conf,
 			promise = this.post(opt);
-        promise.then(function(res) {
+        promise.then((res) => {
             if (res && res.data && res.data.access_token) {
                 storage.setItem(conf.accessTokenKey, res.data.access_token);
                 storage.setItem(conf.refreshTokenKey, res.data.refresh_token);
@@ -243,7 +242,7 @@ export class BEApi {
                 storage.removeItem(conf.refreshTokenKey);
                 storage.removeItem(conf.accessTokenExpireDate);
             }
-        }, function() {
+        }, () => {
             storage.removeItem(conf.accessTokenKey);
             storage.removeItem(conf.refreshTokenKey);
             storage.removeItem(conf.accessTokenExpireDate);
@@ -328,7 +327,7 @@ export class BEApi {
 	 * @return {Promise} The Ajax request Promise.
 	 */
 	auth(username, password) {
-        var conf = {
+        let conf = {
             data: {
                 username: username,
                 password: password
@@ -344,7 +343,7 @@ export class BEApi {
 	 * @return {Promise} The Ajax request Promise.
 	 */
     refreshToken() {
-		var storage = BEApi.storage,
+		let storage = BEApi.storage,
 			conf = this.conf,
         	opt = {
 	            data: {
@@ -363,7 +362,7 @@ export class BEApi {
 	 * @return {Promise} The Ajax request Promise.
 	 */
     logout() {
-		var storage = BEApi.storage,
+		let storage = BEApi.storage,
 			opt = this.conf,
         	promise = this.delete({
                 url: 'auth/' + this.getRefreshToken()
@@ -371,13 +370,11 @@ export class BEApi {
         storage.removeItem(opt.accessTokenKey);
         storage.removeItem(opt.accessTokenExpireDate);
 
-        var onLogout = function(res) {
-            if (res && res.data && res.data.logout) {
+        return promise.then().then(() => {
+			if (res && res.data && res.data.logout) {
                 storage.removeItem(opt.refreshTokenKey);
             }
-        }
-        promise.then(onLogout, onLogout);
-        return promise;
+        });
     }
 
 	/**
@@ -401,7 +398,7 @@ export class BEApi {
 	 * @return {Date} The Access Token Expire Date
 	 */
     getAccessTokenExpireDate() {
-        var data = BEApi.storage.getItem(this.conf.accessTokenExpireDate);
+        let data = BEApi.storage.getItem(this.conf.accessTokenExpireDate);
         if (data) {
             data = parseInt(data);
             return new Date(data);
@@ -429,7 +426,7 @@ export class BEApi {
 			return this._storage;
 		}
 		if ('object' == typeof module && 'object' == typeof module.exports) {
-	        var LocalStorage = require('node-localstorage').LocalStorage;
+	        let LocalStorage = require('node-localstorage').LocalStorage;
 	        return BEApi.storage = new LocalStorage('./beapi');
 	    } else if ('undefined' !== typeof localStorage) {
 	        return BEApi.storage = window.localStorage;

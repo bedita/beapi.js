@@ -9,22 +9,20 @@ class BEApiQueueRelation extends BEApiQueueBaseMethod {
 	}
 
 	input(scope) {
-		var self = this;
-		return new Promise(function (resolve) {
+		return new Promise((resolve) => {
 			resolve([
 				{
-					url: 'objects/' + scope.id + '/relations/' + self.options.relName
+					url: 'objects/' + scope.id + '/relations/' + this.options.relName
 				}
 			]);
 		})
 	}
 
 	transform(scope, res) {
-		var self = this;
-		return new Promise(function (resolve, reject) {
+		return new Promise((resolve, reject) => {
 			scope['relations'] = scope['relations'] || {};
-			scope['relations'][self.options.relName] = scope['relations'][self.options.relName] || {};
-			scope['relations'][self.options.relName].objects = res.data.objects;
+			scope['relations'][this.options.relName] = scope['relations'][this.options.relName] || {};
+			scope['relations'][this.options.relName].objects = res.data.objects;
 			resolve(scope);
 		});
 	}
