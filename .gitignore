@@ -1,7 +1,8 @@
 .DS_Store
 bower_components
 node_modules
-test.json
+.tmp
+conf.js
 npm-debug.log
 beapi/*
 test.html
