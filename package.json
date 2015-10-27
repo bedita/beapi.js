@@ -1,49 +1,49 @@
 {
-  "name": "beapi.js",
-  "version": "0.6.1",
-  "description": "Manage BEdita API calls on your javascript client",
-  "main": "src/beapi.js",
-  "scripts": {
-    "build": "grunt build",
-    "tests": "grunt tests",
-    "doc": "grunt doc",
-    "release": "npm run tests && npm run build && npm run doc && node ./scripts/release.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/bedita/beapi.js"
-  },
-  "keywords": [
-    "bedita",
-    "api"
-  ],
-  "author": "BEdita Team",
-  "license": "LGPL",
-  "bugs": {
-    "url": "https://github.com/bedita/beapi.js/issues"
-  },
-  "homepage": "https://github.com/bedita/beapi.js",
-  "dependencies": {
-    "es6-promise": "^2.3.0",
-    "node-localstorage": "^0.5.0",
-    "xmlhttprequest": "^1.7.0"
-  },
-  "devDependencies": {
-    "babelify": "^6.4.0",
-    "grunt": "^0.4.5",
-    "grunt-babel": "^5.0.3",
-    "grunt-browserify": "^4.0.1",
-    "grunt-contrib-clean": "^0.6.0",
-    "grunt-contrib-concat": "^0.5.1",
-    "grunt-contrib-uglify": "^0.9.2",
-    "grunt-jsdoc-to-markdown": "^1.1.1",
-    "grunt-karma": "^0.12.1",
-    "grunt-replace": "^0.11.0",
-    "jasmine-core": "^2.3.4",
-    "jsdoc": "^3.3.3",
-    "karma": "^0.13.14",
-    "karma-chrome-launcher": "^0.2.1",
-    "karma-jasmine": "^0.3.6",
-    "load-grunt-tasks": "^3.3.0"
-  }
+    "name": "beapi.js",
+    "version": "0.6.2",
+    "description": "Manage BEdita API calls on your javascript client",
+    "main": "src/beapi.js",
+    "scripts": {
+        "build": "grunt build",
+        "tests": "grunt tests",
+        "doc": "grunt doc",
+        "release": "npm run tests && npm run build && npm run doc && node ./scripts/release.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/bedita/beapi.js"
+    },
+    "keywords": [
+        "bedita",
+        "api"
+    ],
+    "author": "BEdita Team",
+    "license": "LGPL",
+    "bugs": {
+        "url": "https://github.com/bedita/beapi.js/issues"
+    },
+    "homepage": "https://github.com/bedita/beapi.js",
+    "dependencies": {
+        "es6-promise": "^2.3.0",
+        "node-localstorage": "^0.5.0",
+        "xmlhttprequest": "^1.7.0"
+    },
+    "devDependencies": {
+        "babelify": "^6.4.0",
+        "grunt": "^0.4.5",
+        "grunt-babel": "^5.0.3",
+        "grunt-browserify": "^4.0.1",
+        "grunt-contrib-clean": "^0.6.0",
+        "grunt-contrib-concat": "^0.5.1",
+        "grunt-contrib-uglify": "^0.9.2",
+        "grunt-jsdoc-to-markdown": "^1.1.1",
+        "grunt-karma": "^0.12.1",
+        "grunt-replace": "^0.11.0",
+        "jasmine-core": "^2.3.4",
+        "jsdoc": "^3.3.3",
+        "karma": "^0.13.14",
+        "karma-chrome-launcher": "^0.2.1",
+        "karma-jasmine": "^0.3.6",
+        "load-grunt-tasks": "^3.3.0"
+    }
 }
