@@ -1,8 +1,8 @@
 var fs = require('fs'),
     version = process.argv[process.argv.length - 1],
     regex = /^\d+\.\d+.\d+$/,
-    npmPackage = require('./package.json'),
-    bowerPackage = require('./bower.json');
+    npmPackage = require('../package.json'),
+    bowerPackage = require('../bower.json');
 
 function exec(cmd, args, cb_end) {
 	var spawn = require('child_process').spawn,
