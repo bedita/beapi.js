@@ -5,7 +5,7 @@ import { BEObject } from './object.next.js';
 import { BECollection } from './collection.next.js';
 
 try {
-	console.log("%c❤︎%c BEdita", 'color: red; font-size: 3em', 'color: #000; font-size: 2em; font-family: Georgia');
+	console.log("%c" + String.fromCharCode(10084) + "%c BEdita", 'color: red; font-size: 3em', 'color: #000; font-size: 2em; font-family: Georgia');
 } catch(ex) {
 	//
 }

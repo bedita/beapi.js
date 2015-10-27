@@ -1,6 +1,8 @@
 describe('beapi.js', function() {
     var beapi, createdObject;
 
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
+
 	describe('load', function () {
 		it('it should load the library', function() {
             expect(BEApi).not.toBe(undefined);
@@ -36,9 +38,8 @@ describe('beapi.js', function() {
             expect(typeof beapi.getRefreshToken()).toEqual('string');
         });
     });
-	describe('authentication:refresh', function() {
+    describe('authentication:refresh', function() {
         var accessToken;
-		jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000;
 
         beforeEach(function(done) {
 			setTimeout(function () {
@@ -54,9 +55,10 @@ describe('beapi.js', function() {
             expect(accessToken).not.toBe(beapi.getAccessToken());
         });
     });
-	describe('get an object', function() {
+	describe('get an object simulating token expiration', function() {
         var object = null;
         beforeEach(function(done) {
+            BEApi.storage.setItem(beapi.getConfiguration().accessTokenExpireDate, 0);
             object = new BEObject({ id: CONF.publication_id }, beapi.getConfiguration());
 			object
 				.query()

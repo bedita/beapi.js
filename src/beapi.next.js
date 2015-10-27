@@ -189,6 +189,7 @@ export class BEApi {
 		}
 
 		res.type = res.method = res.type || res.method || 'GET';
+		res.skipRefreshToken = res.skipRefreshToken || false;
 
 		return res;
 	}
@@ -202,18 +203,18 @@ export class BEApi {
 	 * @return {Promise} The Ajax request Promise.
 	 */
 	_processXHR(opt = {}) {
-        if (this.getAccessToken() && this.isTokenExpired()) {
+        if (this.getAccessToken() && this.isTokenExpired() && !opt.skipRefreshToken) {
             return new Promise((resolve, reject) => {
-                let doXHR = function() {
-                    delete opt.headers['Authorization'];
+                let refreshCompletePromise = this.refreshToken().then();
+				refreshCompletePromise.then(() => {
+					delete opt.headers['Authorization'];
                     opt = this._processOptions(opt);
-                    BEXhr.exec(opt).then(() => {
-                        resolve.apply(this, arguments);
-                    }, () => {
-                        reject.apply(this, arguments);
+                    BEXhr.exec(opt).then((res) => {
+                        resolve(res);
+                    }, (xhr) => {
+                        reject(xhr);
                     });
-                }
-                this.refreshToken().then(doXHR, doXHR);
+				})
             });
         } else {
             return BEXhr.exec(opt);
@@ -229,6 +230,7 @@ export class BEApi {
 	 */
 	_processAuth(opt = {}) {
         opt.url = 'auth';
+		opt.skipRefreshToken = true;
         let storage = BEApi.storage,
 			conf = this.conf,
 			promise = this.post(opt);
@@ -365,7 +367,8 @@ export class BEApi {
 		let storage = BEApi.storage,
 			opt = this.conf,
         	promise = this.delete({
-                url: 'auth/' + this.getRefreshToken()
+                url: 'auth/' + this.getRefreshToken(),
+				skipRefreshToken: true
             });
         storage.removeItem(opt.accessTokenKey);
         storage.removeItem(opt.accessTokenExpireDate);
