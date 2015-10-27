@@ -10,13 +10,13 @@ export class BEApiQueueIdentity extends BEApiQueueBaseMethod {
 	}
 
 	validate() {
-		return new Promise(resolve) => {
+		return new Promise((resolve) => {
 			resolve();
 		});
 	}
 
 	input(scope) {
-		return new Promise(resolve) => {
+		return new Promise((resolve) => {
 			resolve([
 				{
 					url: '/'
@@ -26,7 +26,7 @@ export class BEApiQueueIdentity extends BEApiQueueBaseMethod {
 	}
 
 	transform(scope, res) {
-		return new Promise(resolve, reject) => {
+		return new Promise((resolve, reject) => {
 			resolve(this.options.data);
 		});
 	}
