@@ -46,7 +46,7 @@ export class BEXhr {
 	 * @return {Promise}
 	 */
 	static exec(options = {}) {
-		var defaults = {
+		let defaults = {
 			type: 'GET',
 			async: true,
 			responseType: 'json',
@@ -54,11 +54,11 @@ export class BEXhr {
 			data: undefined
 		}
 		// extend defaults with options
-        var opt = {},
+        let opt = {},
 			merge = [defaults, options];
-        for (var i = 0; i < merge.length; i++) {
-            var obj = merge[i];
-            for (var k in obj) {
+        for (let i = 0; i < merge.length; i++) {
+            let obj = merge[i];
+            for (let k in obj) {
                 opt[k] = obj[k];
             }
         }
@@ -66,11 +66,11 @@ export class BEXhr {
 		// setup a Promise
 		return new Promise((resolve, reject) => {
 			// instantiate the Ajax interface (@see {@link BEXhr.xhr})
-			var oReq = new BEXhr.xhr();
+			let oReq = new BEXhr.xhr();
 
 			// done listener
 			oReq.addEventListener('load', function() {
-				var data;
+				let data;
 				try {
 					data = oReq.response || oReq.responseText || '';
 				} catch(ex) {
@@ -106,13 +106,13 @@ export class BEXhr {
 			oReq.open(opt.type, opt.url, opt.async);
 			// set headers
 			if (opt.headers && 'object' == typeof opt.headers) {
-				for (var k in opt.headers) {
+				for (let k in opt.headers) {
 					oReq.setRequestHeader(k, opt.headers[k]);
 				}
 			}
 			if (opt.type == 'POST' || opt.type == 'PUT' && opt.data !== undefined) {
 				// if POST or PUT method, send data
-				var data = opt.data;
+				let data = opt.data;
 				if ('object' == typeof data) {
 					data = JSON.stringify(data);
 				}

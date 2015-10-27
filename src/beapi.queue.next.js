@@ -14,11 +14,9 @@ export class BEApiQueueTask {
 	 */
 	constructor(method, args = []) {
 		if (method) {
-			self.fn = method;
+			this.fn = method;
 		}
-		if (args) {
-			self.args = args;
-		}
+		this.args = args;
 		// instantiate the task local promise
 		this.promise = new Promise((resolve, reject) => {
 			this.resolve = resolve;
@@ -84,7 +82,7 @@ export class BEApiQueue {
 	 * @return {Promise} the global promise
 	 */
 	exec() {
-		var queue = this.queue,
+		let queue = this.queue,
 			beapi = new BEApi(this.conf),
 			scope;
 
@@ -97,48 +95,48 @@ export class BEApiQueue {
 				// if iterator reached the end of the queue, resolve the global promise
 				return self._resolver(scope);
 			}
-			var task = queue[index],
+			let task = queue[index],
 				method = task.fn,
 				args = task.args,
 				resolver = task.resolve,
 				rejecter = task.reject,
 				promise = task.promise,
-				traskInstance = new BEApiQueue.tasks[method](...args);
+				taskClass = BEApiQueue.tasks[method],
+				taskInstance = new taskClass(...args);
 
 			// process the input arguments using task instance `input` method
-			traskInstance.input.call(traskInstance, scope).then((options) => {
+			taskInstance.input.call(taskInstance, scope).then((options) => {
 				// perform the Ajax request using the BEApi instance
 				// `done` and `fail` callbacks both will be process by the local `onLoad` function
-				let ajaxMethod = traskInstance.type.toLowerCase();
+				let ajaxMethod = taskInstance.type.toLowerCase();
 				if (typeof beapi[ajaxMethod] == 'function') {
-					beapi[ajaxMethod].apply(beapi, options).then(onLoad, onLoad);
+					let loadCompletePromise = beapi[ajaxMethod].apply(beapi, options).then();
+					loadCompletePromise.then((res) => {
+						// validate the request result using task instance `validate` method
+						taskInstance.validate(res).then(() => {
+							// if validation is succeeded, process the result using task instance `transform` method.
+							// The `transform` function of a BEApiQueue Method performs some changes to the request result
+							// and to the scope object.
+							taskInstance.transform(scope, res).then((obj) => {
+								// update the scope
+								scope = obj;
+								// resolve the task promise
+								resolver(scope);
+								// execute the next task!
+								_exec(self, queue, index + 1);
+							}, (err) => {
+								// if transformation fails, reject both task and global promises and stop the queue
+								rejecter(scope);
+								self._rejecter(err);
+							});
+						}, (err) => {
+							// if validation fails, reject both task and global promises and stop the queue
+							rejecter(scope);
+							self._rejecter(err);
+						});
+					});
 				}
 			});
-
-			function onLoad (res) {
-				// validate the request result using task instance `validate` method
-				traskInstance.validate(res).then(() => {
-					// if validation is succeeded, process the result using task instance `transform` method.
-					// The `transform` function of a BEApiQueue Method performs some changes to the request result
-					// and to the scope object.
-					traskInstance.transform(scope, res).then((obj) => {
-						// update the scope
-						scope = obj;
-						// resolve the task promise
-						resolver(scope);
-						// execute the next task!
-						_exec(self, queue, index + 1);
-					}, (err) => {
-						// if transformation fails, reject both task and global promises and stop the queue
-						rejecter(scope);
-						self._rejecter(err);
-					});
-				}, (err) => {
-					// if validation fails, reject both task and global promises and stop the queue
-					rejecter(scope);
-					self._rejecter(err);
-				});
-			}
 		}
 
 		return this._promise;

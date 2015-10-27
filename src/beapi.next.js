@@ -370,7 +370,7 @@ export class BEApi {
         storage.removeItem(opt.accessTokenKey);
         storage.removeItem(opt.accessTokenExpireDate);
 
-        return promise.then().then(() => {
+        return promise.then().then((res) => {
 			if (res && res.data && res.data.logout) {
                 storage.removeItem(opt.refreshTokenKey);
             }
