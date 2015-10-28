@@ -42,158 +42,6 @@ or, if you are using Angular:
 
 Right now, **beapi.js** stores `access_token`, `refresh_token` and `access_token_expire_date` in the browser `localStorage` or using node `fs`. If your project needs to support browsers without the `localStorage` interface, or if you want to use other stores, you can replace `beapi.storage` with another `Object` with the same interface.
 
-
-## BEApi.js generic methods
-
-### .get(*url*|*options*)
-
-Generic GET call.
-
-Accepts:
-
-- `String` *url*: the api endpoint
-- **or** `Object` *options*: an options builder compatible object
-
-Returns a `Promise`.
-
-### .post(*url*|*options*, [opt] *data*)
-
-Generic POST call.
-
-Accepts:
-
-- `String` *url*: the api endpoint
-- **or** `Object` *options*: an options builder compatible object
-- [optional] `Object` *data*: the data body of the POST call. If *options.data* is already defined, *data* will be merge on it.
-
-Returns a `Promise`.
-
-### .put(*url*|*options*, [opt] *data*)
-
-Generic PUT call.
-
-Accepts:
-
-- `String` *url*: the api endpoint
-- **or** `Object` *options*: an options builder compatible object
-- [optional] `Object` *data*: the data body of the PUT call. If *options.data* is already defined, *data* will be merge on it.
-
-Returns a `Promise`.
-
-### .delete(*url*|*options*)
-
-Generic DELETE call.
-
-Accepts:
-
-- `String` *url*: the api endpoint
-- **or** `Object` *options*: an options builder compatible object
-
-Returns a `Promise`.
-
-## BEApi.js auth methods
-
-### .auth(*username*, *password*)
-
-Ask for `accessToken` and `refreshToken` to the server through a POST call and save them in the `localStorage`.
-
-If the authentication is successful, every time that a call to the server will be made, the `accessToken` will be passed in the `Authorization` header.
-
-Accepts:
-
-- `String` *username*: the user nickname
-- `String` *password*: the user password
-
-Returns a `Promise`.
-
-### .getAccessToken()
-
-Read the `accessToken` from `localStorage`.
-
-Returns a `String` **or** `undefined` if the user is not authenticated.
-
-### .getRefreshToken()
-
-Read the `refreshToken` from `localStorage`.
-
-Returns a `String` **or** `undefined` if the user is not authenticated.
-
-### .getAccessTokenExpireDate()
-
-Read the expiration date of the `accessToken` from `localStorage`.
-
-Returns a `Date` **or** `undefined` if the user is not authenticated.
-
-### .isTokenExpired()
-
-Check if `accessToken` has expired.
-
-Returns a `Boolean`.
-
-### .refreshToken()
-
-Ask for a new `accessToken` and a new `refreshToken` to the server through a POST call and save them in the `localStorage`.
-
-It automatically passes the old `refreshToken` in the POST call.
-
-Returns a `Promise`.
-
-### .logout()
-
-Ask to the server to invalidate the `refreshToken` through a POST call and remove `accessToken` and `refreshToken` from the `localStorage`.
-
-It automatically passes the `refreshToken` in the POST call.
-
-Returns a `Promise`.
-
-## BEObject and BECollection
-
-### BEObject
-
-The `BEObject` model is useful for fetch and manage object entities.
-
-*Constructor:*
-
-```js
-new BEObject(objectData, serverData);
-// example
-var obj = new BEObject({ id: 1 }, { baseUrl: 'https://bedita.com/api/latest' });
-```
-
-*Properties:*
-
-- **`parent`**: a `BEObject` instance representing the parent object (if `parent_id` field is defined).
-- **`query`**: a `BEApiQueue` instance representing the current object.
-
-*Methods:*
-
-- **fetch()**: fetch the object data from the server (the object field `id` should be defined)
-- **set(*data*)**: update object data
-- **is(*data*)**: check if an object matches the object data definition.
-
-### BECollection
-
-An Object representing a Collection of BEdita objects.
-
-*Constructor:*
-
-```js
-new BECollection(objectData, serverData);
-// example
-var listening = new BECollection({ items: [] }, { baseUrl: 'https://bedita.com/api/latest' });
-```
-
-*Properties:*
-
-- **items**: an Array of `BEObject`s.
-- **length**: the length of Collection (could be defferent from `items.length`, if you have not fetched data yet).
-
-*Methods:*
-
-- **fetch()**: fetch the objects data from the server (the collection `url` should be defined).
-- **forEach(*callback*)**: iterate Collection items.
-- **filter(*filter*)**: get an Array of filtered objects.
-
 ## Build, test and release
 
 ### Prerequisites:
@@ -212,24 +60,24 @@ var listening = new BECollection({ items: [] }, { baseUrl: 'https://bedita.com/a
 
 ### Build
 
-Navigate to the project path and run:
+- Navigate to the project path and run:
 
 		npm run build
 
 
-### Release
-
-Navigate to the project path and run:
-
-		npm run release X.X.X
-
-
 ### Running tests
 
-Configure your test environment, using `tests/conf.js.sample` as footprint for you configuration:
+- Configure your test environment, using `tests/conf.js.sample` as footprint for you configuration:
 
 		mv tests/conf.js.sample tests/conf.js
 
-Then run:
+- and run:
 
 		npm run tests
+
+
+### Release
+
+- Navigate to the project path and run:
+
+		npm run release X.X.X
