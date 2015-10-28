@@ -33,6 +33,7 @@ export class BEObject extends BEModel {
                     if (res && res.data && res.data.object) {
                         this.set(res.data.object);
 						this._modified(false);
+						resolve(res);
                     } else {
 						reject(res);
 					}

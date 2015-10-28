@@ -14,7 +14,7 @@ export class BEApiQueue {
 			// if conf is a string, try to read configuration from BEApiRegistry
 			this.conf = BEApiRegistry.getInstance(conf);
 		} else if (conf instanceof BEApi) {
-			// if conf is a BEApi instance, grab the configuration with `BEApi.getConfiguration` method
+			// if conf is a BEApi instance, grab the configuration with `BEApi.conf` property
 			this.conf = conf.conf;
 		} else if (typeof conf === 'object') {
 			// if conf is a plain object, use it
