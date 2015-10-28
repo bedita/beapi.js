@@ -8,7 +8,7 @@ import './methods/all.next.js';
  * @classdesc A generic model for BE objects.
  *
  * @description Set up the model.
- * @see {@link BEModel.constructor}.
+ * see {@link BEModel.constructor}.
  * @param {Object} data The initial data to set.
  * @param {Object} conf An optional set of configuration params.
  */

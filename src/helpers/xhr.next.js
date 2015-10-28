@@ -66,7 +66,7 @@ export class BEXhr {
 		opt.type = opt.type.toUpperCase();
 		// setup a Promise
 		return new Promise((resolve, reject) => {
-			// instantiate the Ajax interface (@see {@link BEXhr.xhr})
+			// instantiate the Ajax interface (see {@link BEXhr.xhr})
 			let oReq = new BEXhr.xhr();
 
 			// done listener

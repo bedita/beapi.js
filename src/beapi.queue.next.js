@@ -15,7 +15,7 @@ export class BEApiQueue {
 			this.conf = BEApiRegistry.getInstance(conf);
 		} else if (conf instanceof BEApi) {
 			// if conf is a BEApi instance, grab the configuration with `BEApi.getConfiguration` method
-			this.conf = conf.getConfiguration();
+			this.conf = conf.conf;
 		} else if (typeof conf === 'object') {
 			// if conf is a plain object, use it
 			this.conf = conf;
@@ -116,7 +116,7 @@ export class BEApiQueue {
 
 	/**
 	 * Alias of `BEApiQueue.exec`.
-	 * @see {@link BEApiQueue#exec}
+	 * see {@link BEApiQueue#exec}
 	 */
 	get() {
 		return this.exec();

@@ -44,15 +44,39 @@ function _extend(res = {}, ...args) {
 export class BEApi {
 
 	constructor(conf = {}) {
-		/**
-		 * A set of options.
-		 * @namespace
-		 * @property {String} baseUrl 				The base frontend endpoint.
-		 * @property {String} configKey 			The registry key to use to store this BEApi configuration (@see {@link BEApiRegistry}).
-		 * @property {String} accessTokenKey 		The storage key to use for Access Token when using auth methods.
-		 * @property {String} refreshTokenKey		The storage key to use for Refresh Token when using auth methods.
-		 * @property {String} accessTokenExpireDate The storage key to use for Access Token Expire Date when using auth methods.
-		 */
+		// if the base url is not provided, try to extract it from the `window.location`.
+		if (!conf.baseUrl) {
+			try {
+		        conf.baseUrl = window.location.protocol + '//' + window.location.hostname + (window.location.port ? ':' + window.location.port: '') + '/api/latest/';
+		    } catch (ex) {
+		        throw 'Missing valid `baseUrl`.';
+	    	}
+		}
+
+		this.conf = conf;
+		// add the current configuration to the BEApiRegistry.
+		BEApiRegistry.add(this.configKey, this.conf);
+	}
+
+	/**
+	 * A set of options.
+	 * @type {Object}
+	 * @property {String} baseUrl 				The base frontend endpoint.
+	 * @property {String} configKey 			The registry key to use to store this BEApi configuration (see {@link BEApiRegistry}).
+	 * @property {String} accessTokenKey 		The storage key to use for Access Token when using auth methods.
+	 * @property {String} refreshTokenKey		The storage key to use for Refresh Token when using auth methods.
+	 * @property {String} accessTokenExpireDate The storage key to use for Access Token Expire Date when using auth methods.
+	 */
+	get conf() {
+		return this._conf;
+	}
+
+	/**
+	 * Setter for configuration object.
+	 * @private
+	 * @param {Object} conf A set of options.
+	 */
+	set conf(conf) {
 		let opt = {
 			baseUrl: undefined,
 			accessTokenKey: 'be_access_token',
@@ -61,26 +85,16 @@ export class BEApi {
 			configKey: this.defaultConfigKey
 		}
 
-        for (let k in conf) {
+		for (let k in conf) {
             opt[k] = conf[k];
         }
 
-		// if the base url is not provided, try to extract it from the `window.location`.
-		if (!opt.baseUrl) {
-			try {
-		        opt.baseUrl = window.location.protocol + '//' + window.location.hostname + (window.location.port ? ':' + window.location.port: '') + '/api/latest/';
-		    } catch (ex) {
-		        throw 'Missing valid `baseUrl`.';
-	    	}
-		}
-
-		this.conf = opt;
-		// add the current configuration to the BEApiRegistry.
-		BEApiRegistry.add(this.configKey, this.conf);
+		this._conf = opt;
 	}
 
 	/**
 	 * The default register configuration key.
+	 * @private
 	 * @type {String}
 	 */
 	get defaultConfigKey() {
@@ -94,14 +108,6 @@ export class BEApi {
 	 */
 	get configKey() {
 		return (this.conf && this.conf.configKey) || this.defaultConfigKey;
-	}
-
-	/**
-	 * Get instance configuration object.
-	 * @type {object}
-	 */
-	getConfiguration() {
-		return this.conf;
 	}
 
 	/**
@@ -175,7 +181,7 @@ export class BEApi {
 
 	/**
 	 * Perform the Ajax request for Authentication.
-	 * - Automatically store Access Token, Refresh Token and Expire Date to the storage (@see {@link BEApi#storage}).
+	 * - Automatically store Access Token, Refresh Token and Expire Date to the storage (see {@link BEApi#storage}).
 	 * @private
 	 * @param {Object} opt A complete set of options to pass to the Ajax request.
 	 * @return {Promise} The Ajax request Promise.
@@ -205,19 +211,21 @@ export class BEApi {
     }
 
 	/**
-	 * Convenience method to set the BEdita API frontend base url.
-	 * @param {String} url The url to set.
-	 * @return {Object} The BEApi instance.
+	 * Convenience method to obtain or set the BEdita API frontend base url.
+	 * @param {String} url The url to set (optional).
+	 * @return {Object} The BEdita API frontend base url.
 	 */
-	setBaseUrl(url) {
-		this.conf.baseUrl = url;
-		return this;
+	baseUrl(url) {
+		if (url) {
+			this.conf.baseUrl = url;
+		}
+		return this.conf.baseUrl;
 	}
 
 	/**
 	 * Perform an API GET request.
 	 * - Automatically set `GET` as request method.
-	 * - Use {@link _processOptions} and {@link _processOptions}
+	 * - Use {@link _processOptions} and {@link _processXHR}
 	 * @param {Object} conf A set of options to pass to the Ajax request.
 	 * @return {Promise} The Ajax request Promise.
 	 */
@@ -231,7 +239,7 @@ export class BEApi {
 	/**
 	 * Perform an API POST request.
 	 * - Automatically set `POST` as request method.
-	 * - Use {@link _processOptions} and {@link _processOptions}
+	 * - Use {@link _processOptions} and {@link _processXHR}
 	 * @param {Object} conf A set of options to pass to the Ajax request.
 	 * @return {Promise} The Ajax request Promise.
 	 */
@@ -246,7 +254,7 @@ export class BEApi {
 	/**
 	 * Perform an API PUT request.
 	 * - Automatically set `PUT` as request method.
-	 * - Use {@link _processOptions} and {@link _processOptions}
+	 * - Use {@link _processOptions} and {@link _processXHR}
 	 * @param {Object} conf A set of options to pass to the Ajax request.
 	 * @return {Promise} The Ajax request Promise.
 	 */
@@ -261,7 +269,7 @@ export class BEApi {
 	/**
 	 * Perform an API DELETE request.
 	 * - Automatically set `DELETE` as request method.
-	 * - Use {@link _processOptions} and {@link _processOptions}
+	 * - Use {@link _processOptions} and {@link _processXHR}
 	 * @param {Object} conf A set of options to pass to the Ajax request.
 	 * @return {Promise} The Ajax request Promise.
 	 */
@@ -275,7 +283,7 @@ export class BEApi {
 	/**
 	 * Perform an API Auth request.
 	 * - Use {@link _processAuth}
-	 * - Automatically store Access Token to the storage (@see {@link BEApi#storage}).
+	 * - Automatically store Access Token to the storage (see {@link BEApi#storage}).
 	 * @param {String} username The username.
 	 * @param {String} password The user's password.
 	 * @return {Promise} The Ajax request Promise.
@@ -293,7 +301,7 @@ export class BEApi {
 	/**
 	 * Perform an API Refresh Token request.
 	 * - Use {@link _processAuth}
-	 * - Retrieve Access Token from the storage (@see {@link BEApi#storage}).
+	 * - Retrieve Access Token from the storage (see {@link BEApi#storage}).
 	 * @return {Promise} The Ajax request Promise.
 	 */
     refreshToken() {
@@ -312,7 +320,7 @@ export class BEApi {
 
 	/**
 	 * Perform an API Logout request.
-	 * - Remove all BEApi data from the storage (@see {@link BEApi#storage}).
+	 * - Remove all BEApi data from the storage (see {@link BEApi#storage}).
 	 * @return {Promise} The Ajax request Promise.
 	 */
     logout() {
@@ -333,7 +341,7 @@ export class BEApi {
     }
 
 	/**
-	 * Retrieve Access Token from the storage (@see {@link BEApi#storage}).
+	 * Retrieve Access Token from the storage (see {@link BEApi#storage}).
 	 * @return {String} The Access Token
 	 */
     getAccessToken() {
@@ -341,7 +349,7 @@ export class BEApi {
     }
 
 	/**
-	 * Retrieve Refresh Token from the storage (@see {@link BEApi#storage}).
+	 * Retrieve Refresh Token from the storage (see {@link BEApi#storage}).
 	 * @return {String} The Refresh Token
 	 */
     getRefreshToken() {
@@ -349,7 +357,7 @@ export class BEApi {
     }
 
 	/**
-	 * Retrieve Access Token Expire Date from the storage (@see {@link BEApi#storage}).
+	 * Retrieve Access Token Expire Date from the storage (see {@link BEApi#storage}).
 	 * @return {Date} The Access Token Expire Date
 	 */
     getAccessTokenExpireDate() {

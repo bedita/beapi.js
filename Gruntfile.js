@@ -95,6 +95,9 @@ grunt.initConfig({
     jsdoc2md: {
         docs: {
             files: [{
+                options: {
+                    'property-list-format': 'table'
+                },
                 expand: true,
                 src: ['src/**/*.next.js', '!src/index.next.js', '!src/methods/all.next.js'],
                 dest: 'docs',

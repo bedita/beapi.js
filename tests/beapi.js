@@ -58,8 +58,8 @@ describe('beapi.js', function() {
 	describe('get an object simulating token expiration', function() {
         var object = null;
         beforeEach(function(done) {
-            BEApi.storage.setItem(beapi.getConfiguration().accessTokenExpireDate, 0);
-            object = new BEObject({ id: CONF.publication_id }, beapi.getConfiguration());
+            BEApi.storage.setItem(beapi.conf.accessTokenExpireDate, 0);
+            object = new BEObject({ id: CONF.publication_id }, beapi.conf);
 			object
 				.query()
 				.relation('attach')
@@ -86,7 +86,7 @@ describe('beapi.js', function() {
 				title: 'Test api',
 				object_type: 'book',
 				parents: [CONF.publication_id]
-			}, beapi.getConfiguration());
+			}, beapi.conf);
 			createdObject.create().then(function (res) {
 				//
 			}, function (err) {
@@ -126,7 +126,7 @@ describe('beapi.js', function() {
         var collection = null;
 
         beforeEach(function(done) {
-            collection = new BECollection({ url: 'objects' }, beapi.getConfiguration());
+            collection = new BECollection({ url: 'objects' }, beapi.conf);
 			collection.fetch().then(function(obj) {
 				response = obj;
             }, function(err) {
