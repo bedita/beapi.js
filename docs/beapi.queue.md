@@ -65,9 +65,9 @@ Perform the queue of requests.
 <a name="BEApiQueue+get"></a>
 ### beApiQueue.get()
 Alias of `BEApiQueue.exec`.
+see [exec](#BEApiQueue+exec)
 
 **Kind**: instance method of <code>[BEApiQueue](#BEApiQueue)</code>  
-**See**: [exec](#BEApiQueue+exec)  
 <a name="BEApiQueue+first"></a>
 ### beApiQueue.first() ⇒ <code>[BEApiQueueTask](#BEApiQueueTask)</code>
 Get the first task in queue.

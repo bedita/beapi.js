@@ -3,7 +3,6 @@
 A generic model for BE objects.
 
 **Kind**: global class  
-**See**: [BEModel.constructor](BEModel.constructor).  
 
 * [BEObject](#BEObject)
   * [new BEObject(data, conf)](#new_BEObject_new)
@@ -19,6 +18,7 @@ A generic model for BE objects.
 <a name="new_BEObject_new"></a>
 ### new BEObject(data, conf)
 Set up the model.
+see [BEModel.constructor](BEModel.constructor).
 
 
 | Param | Type | Description |

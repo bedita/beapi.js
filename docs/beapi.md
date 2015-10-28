@@ -7,10 +7,9 @@ Create an interface to communicate with a BEdita API frontend.
 * [BEApi](#BEApi)
   * [new BEApi(conf)](#new_BEApi_new)
   * _instance_
-    * [.defaultConfigKey](#BEApi+defaultConfigKey) : <code>String</code>
+    * [.conf](#BEApi+conf) : <code>Object</code>
     * [.configKey](#BEApi+configKey) : <code>String</code>
-    * [.getConfiguration()](#BEApi+getConfiguration) : <code>object</code>
-    * [.setBaseUrl(url)](#BEApi+setBaseUrl) ⇒ <code>Object</code>
+    * [.baseUrl(url)](#BEApi+baseUrl) ⇒ <code>Object</code>
     * [.get(conf)](#BEApi+get) ⇒ <code>Promise</code>
     * [.post(conf)](#BEApi+post) ⇒ <code>Promise</code>
     * [.put(conf)](#BEApi+put) ⇒ <code>Promise</code>
@@ -35,38 +34,43 @@ Instantiate a BEApi Object.
 | --- | --- | --- |
 | conf | <code>Object</code> | A set of options. |
 
-<a name="BEApi+defaultConfigKey"></a>
-### beApi.defaultConfigKey : <code>String</code>
-The default register configuration key.
+<a name="BEApi+conf"></a>
+### beApi.conf : <code>Object</code>
+A set of options.
 
 **Kind**: instance property of <code>[BEApi](#BEApi)</code>  
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| baseUrl | <code>String</code> | The base frontend endpoint. |
+| configKey | <code>String</code> | The registry key to use to store this BEApi configuration (see [BEApiRegistry](BEApiRegistry)). |
+| accessTokenKey | <code>String</code> | The storage key to use for Access Token when using auth methods. |
+| refreshTokenKey | <code>String</code> | The storage key to use for Refresh Token when using auth methods. |
+| accessTokenExpireDate | <code>String</code> | The storage key to use for Access Token Expire Date when using auth methods. |
+
 <a name="BEApi+configKey"></a>
 ### beApi.configKey : <code>String</code>
 Return the chosen registry configuration key or the default one.
 
 **Kind**: instance property of <code>[BEApi](#BEApi)</code>  
 **Default**: <code>&#x27;default&#x27;</code>  
-<a name="BEApi+getConfiguration"></a>
-### beApi.getConfiguration() : <code>object</code>
-Get instance configuration object.
+<a name="BEApi+baseUrl"></a>
+### beApi.baseUrl(url) ⇒ <code>Object</code>
+Convenience method to obtain or set the BEdita API frontend base url.
 
 **Kind**: instance method of <code>[BEApi](#BEApi)</code>  
-<a name="BEApi+setBaseUrl"></a>
-### beApi.setBaseUrl(url) ⇒ <code>Object</code>
-Convenience method to set the BEdita API frontend base url.
-
-**Kind**: instance method of <code>[BEApi](#BEApi)</code>  
-**Returns**: <code>Object</code> - The BEApi instance.  
+**Returns**: <code>Object</code> - The BEdita API frontend base url.  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| url | <code>String</code> | The url to set. |
+| url | <code>String</code> | The url to set (optional). |
 
 <a name="BEApi+get"></a>
 ### beApi.get(conf) ⇒ <code>Promise</code>
 Perform an API GET request.
 - Automatically set `GET` as request method.
-- Use [_processOptions](_processOptions) and [_processOptions](_processOptions)
+- Use [_processOptions](_processOptions) and [_processXHR](_processXHR)
 
 **Kind**: instance method of <code>[BEApi](#BEApi)</code>  
 **Returns**: <code>Promise</code> - The Ajax request Promise.  
@@ -79,7 +83,7 @@ Perform an API GET request.
 ### beApi.post(conf) ⇒ <code>Promise</code>
 Perform an API POST request.
 - Automatically set `POST` as request method.
-- Use [_processOptions](_processOptions) and [_processOptions](_processOptions)
+- Use [_processOptions](_processOptions) and [_processXHR](_processXHR)
 
 **Kind**: instance method of <code>[BEApi](#BEApi)</code>  
 **Returns**: <code>Promise</code> - The Ajax request Promise.  
@@ -92,7 +96,7 @@ Perform an API POST request.
 ### beApi.put(conf) ⇒ <code>Promise</code>
 Perform an API PUT request.
 - Automatically set `PUT` as request method.
-- Use [_processOptions](_processOptions) and [_processOptions](_processOptions)
+- Use [_processOptions](_processOptions) and [_processXHR](_processXHR)
 
 **Kind**: instance method of <code>[BEApi](#BEApi)</code>  
 **Returns**: <code>Promise</code> - The Ajax request Promise.  
@@ -105,7 +109,7 @@ Perform an API PUT request.
 ### beApi.delete(conf) ⇒ <code>Promise</code>
 Perform an API DELETE request.
 - Automatically set `DELETE` as request method.
-- Use [_processOptions](_processOptions) and [_processOptions](_processOptions)
+- Use [_processOptions](_processOptions) and [_processXHR](_processXHR)
 
 **Kind**: instance method of <code>[BEApi](#BEApi)</code>  
 **Returns**: <code>Promise</code> - The Ajax request Promise.  
@@ -118,7 +122,7 @@ Perform an API DELETE request.
 ### beApi.auth(username, password) ⇒ <code>Promise</code>
 Perform an API Auth request.
 - Use [_processAuth](_processAuth)
-- Automatically store Access Token to the storage (@see [BEApi#storage](BEApi#storage)).
+- Automatically store Access Token to the storage (see [BEApi#storage](BEApi#storage)).
 
 **Kind**: instance method of <code>[BEApi](#BEApi)</code>  
 **Returns**: <code>Promise</code> - The Ajax request Promise.  
@@ -132,32 +136,32 @@ Perform an API Auth request.
 ### beApi.refreshToken() ⇒ <code>Promise</code>
 Perform an API Refresh Token request.
 - Use [_processAuth](_processAuth)
-- Retrieve Access Token from the storage (@see [BEApi#storage](BEApi#storage)).
+- Retrieve Access Token from the storage (see [BEApi#storage](BEApi#storage)).
 
 **Kind**: instance method of <code>[BEApi](#BEApi)</code>  
 **Returns**: <code>Promise</code> - The Ajax request Promise.  
 <a name="BEApi+logout"></a>
 ### beApi.logout() ⇒ <code>Promise</code>
 Perform an API Logout request.
-- Remove all BEApi data from the storage (@see [BEApi#storage](BEApi#storage)).
+- Remove all BEApi data from the storage (see [BEApi#storage](BEApi#storage)).
 
 **Kind**: instance method of <code>[BEApi](#BEApi)</code>  
 **Returns**: <code>Promise</code> - The Ajax request Promise.  
 <a name="BEApi+getAccessToken"></a>
 ### beApi.getAccessToken() ⇒ <code>String</code>
-Retrieve Access Token from the storage (@see [BEApi#storage](BEApi#storage)).
+Retrieve Access Token from the storage (see [BEApi#storage](BEApi#storage)).
 
 **Kind**: instance method of <code>[BEApi](#BEApi)</code>  
 **Returns**: <code>String</code> - The Access Token  
 <a name="BEApi+getRefreshToken"></a>
 ### beApi.getRefreshToken() ⇒ <code>String</code>
-Retrieve Refresh Token from the storage (@see [BEApi#storage](BEApi#storage)).
+Retrieve Refresh Token from the storage (see [BEApi#storage](BEApi#storage)).
 
 **Kind**: instance method of <code>[BEApi](#BEApi)</code>  
 **Returns**: <code>String</code> - The Refresh Token  
 <a name="BEApi+getAccessTokenExpireDate"></a>
 ### beApi.getAccessTokenExpireDate() ⇒ <code>Date</code>
-Retrieve Access Token Expire Date from the storage (@see [BEApi#storage](BEApi#storage)).
+Retrieve Access Token Expire Date from the storage (see [BEApi#storage](BEApi#storage)).
 
 **Kind**: instance method of <code>[BEApi](#BEApi)</code>  
 **Returns**: <code>Date</code> - The Access Token Expire Date  
