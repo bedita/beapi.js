@@ -1,7 +1,7 @@
 <a name="BEApiRegistry"></a>
 ## BEApiRegistry
 A registry of BEApi configuration.
-Everywhere, in your JavaScript application, you can use `BEApiRegistry.getInstance(key)` to retrieve a BEApi configration.
+Everywhere, in your JavaScript application, you can use `BEApiRegistry.get(key)` to retrieve a BEApi configration.
 Register BEApi configurations is lighter and simpler than register instances.
 Use BEApiRegistry to share configuration between models, interfaces and queues.
 
@@ -9,7 +9,7 @@ Use BEApiRegistry to share configuration between models, interfaces and queues.
 
 * [BEApiRegistry](#BEApiRegistry)
   * [.add(key, conf)](#BEApiRegistry.add)
-  * [.getInstance(key)](#BEApiRegistry.getInstance) ⇒ <code>Object</code>
+  * [.get(key)](#BEApiRegistry.get) ⇒ <code>Object</code>
   * [.remove(key)](#BEApiRegistry.remove) ⇒ <code>Boolean</code>
 
 <a name="BEApiRegistry.add"></a>
@@ -23,8 +23,8 @@ Add a configuration using the provided key.
 | key | <code>String</code> | The key to use to register the configuration. |
 | conf | <code>Object</code> | The configuration. |
 
-<a name="BEApiRegistry.getInstance"></a>
-### BEApiRegistry.getInstance(key) ⇒ <code>Object</code>
+<a name="BEApiRegistry.get"></a>
+### BEApiRegistry.get(key) ⇒ <code>Object</code>
 Retrieve a configuration using the provided key.
 
 **Kind**: static method of <code>[BEApiRegistry](#BEApiRegistry)</code>  

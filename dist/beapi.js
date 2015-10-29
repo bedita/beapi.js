@@ -31,8 +31,9 @@ var BEModel = (function () {
 	function BEModel(conf) {
 		_classCallCheck(this, BEModel);
 
-		this.__config = conf;
-		this.__modified = [];
+		this.$udid = BEModel.generateId();
+		BEModel.updateRegistry(this, 'conf', conf);
+		BEModel.updateRegistry(this, 'modified', []);
 	}
 
 	/**
@@ -45,18 +46,28 @@ var BEModel = (function () {
   */
 
 	/**
-  * Get or set configuration params.
-  * @param {Object} conf An optional set of configuration params.
-  * @return {Object} The current configuration set.
+  * Get the client registry ID.
+  * @return {String|Number} The client registry ID.
   */
 
 	_createClass(BEModel, [{
-		key: '_config',
-		value: function _config(conf) {
+		key: '$id',
+		value: function $id() {
+			return this.$udid;
+		}
+
+		/**
+   * Get or set configuration params.
+   * @param {Object} conf An optional set of configuration params.
+   * @return {Object} The current configuration set.
+   */
+	}, {
+		key: '$config',
+		value: function $config(conf) {
 			if (conf) {
-				this.__config = conf;
+				return BEModel.updateRegistry(this, 'conf', conf);
 			}
-			return this.__config;
+			return BEModel.readRegistry(this, 'conf') || {};
 		}
 
 		/**
@@ -65,14 +76,114 @@ var BEModel = (function () {
    * @return {Array} A list of fields which need to be synced.
    */
 	}, {
-		key: '_modified',
-		value: function _modified(key) {
+		key: '$modified',
+		value: function $modified(key) {
+			var modified = BEModel.readRegistry(this, 'modified') || [];
 			if (key === false) {
-				this.__modified = [];
-			} else if (key && this.__modified.indexOf(key) === -1) {
-				this.__modified.push(key);
+				return BEModel.updateRegistry(this, 'modified', []);
+			} else if (key && modified.indexOf(key) === -1) {
+				modified.push(key);
+				return BEModel.updateRegistry(this, 'modified', modified);
 			}
-			return this.__modified;
+			return BEModel.readRegistry(this, 'modified');
+		}
+
+		/**
+   * Destroy a model and remove its references from the registry.
+   * @return {Boolean} The model has actually been removed.
+   */
+	}, {
+		key: '$remove',
+		value: function $remove() {
+			return BEModel.removeFromRegistry(this);
+		}
+
+		/**
+   * Returns a plain javascript object with the model data.
+   * @return {Object}
+   */
+	}, {
+		key: '$toJSON',
+		value: function $toJSON(keep, remove) {
+			var res = {},
+			    data = this;
+
+			if (!Array.isArray(keep)) {
+				keep = [];
+			}
+			if (!Array.isArray(remove)) {
+				remove = [];
+			}
+			for (var k in data) {
+				if (k[0] !== '$') {
+					res[k] = data[k];
+				}
+			}
+			return res;
+		}
+
+		/**
+   * Generate an unique id.
+   * @static
+   * @return {String|Number} An unique id.
+   */
+	}], [{
+		key: 'generateId',
+		value: function generateId() {
+			this.__generated = this.__generated || 0;
+			var id = '$' + this.__generated;
+			this.__generated += 1;
+			return id;
+		}
+
+		/**
+   * Read a value stored in the registry for a specific model.
+   * @static
+   * @param {Object|String|Number} The model or its registry id.
+   * @return {*} The stored value.
+   */
+	}, {
+		key: 'readRegistry',
+		value: function readRegistry(obj, key) {
+			this.registry = this.registry || {};
+			var udid = obj instanceof BEModel ? obj.$id() : obj;
+			if (udid) {
+				this.registry[udid] = this.registry[udid] || {};
+				return this.registry[udid][key];
+			}
+		}
+
+		/**
+   * Update a value stored in the registry for a specific model.
+   * @static
+   * @param {Object|String|Number} The model or its registry id.
+   * @return {*} The stored value.
+   */
+	}, {
+		key: 'updateRegistry',
+		value: function updateRegistry(obj, key, value) {
+			this.registry = this.registry || {};
+			var udid = obj instanceof BEModel ? obj.$id() : obj;
+			if (udid) {
+				this.registry[udid] = this.registry[udid] || {};
+				this.registry[udid][key] = value;
+				return value;
+			}
+		}
+
+		/**
+   * Remove a model entry from the registry.
+   * @static
+   * @param {Object|String|Number} The model or its registry id.
+   */
+	}, {
+		key: 'removeFromRegistry',
+		value: function removeFromRegistry(obj) {
+			this.registry = this.registry || {};
+			var udid = obj instanceof BEModel ? obj.$id() : obj;
+			if (udid) {
+				delete this.registry[udid];
+			}
 		}
 	}]);
 
@@ -83,30 +194,44 @@ var BEArray = (function (_Array) {
 	_inherits(BEArray, _Array);
 
 	function BEArray(items, conf) {
+		if (items === undefined) items = [];
+
 		_classCallCheck(this, BEArray);
 
 		_get(Object.getPrototypeOf(BEArray.prototype), 'constructor', this).call(this, items);
-		this.__config = conf;
+		this.$udid = BEModel.generateId();
+		BEModel.updateRegistry(this, 'conf', conf);
 	}
 
 	/**
   * @class BECollection
   * @classdesc A generic model for BE collections.
+  *
+  * @description Instantiate a BECollection Array.
+  * @param {String|Array|Object} data If `String` case, it's the endpoint to fetch. If `Array`, it's the initial state of the collection. If `Object`, it's an object with `<array>items` and `<number>count` fields (in case of pagination).
+  * @param {Object} conf An optional set of BEApi configuration params.
   */
 
 	/**
-  * Get or set configuration params.
-  * @param {Object} conf An optional set of configuration params.
-  * @return {Object} The current configuration set.
+  * Get the client registry ID.
+  * @return {String|Number} The client registry ID.
   */
 
 	_createClass(BEArray, [{
-		key: '_config',
-		value: function _config(conf) {
-			if (conf) {
-				this.__config = conf;
-			}
-			return this.__config;
+		key: '$id',
+		value: function $id() {
+			return BEModel.prototype.$id.call(this);
+		}
+
+		/**
+   * Get or set configuration params.
+   * @param {Object} conf An optional set of configuration params.
+   * @return {Object} The current configuration set.
+   */
+	}, {
+		key: '$config',
+		value: function $config(conf) {
+			return BEModel.prototype.$config.call(this, conf);
 		}
 
 		/**
@@ -115,14 +240,9 @@ var BEArray = (function (_Array) {
    * @return {Array} A list of fields which need to be synced.
    */
 	}, {
-		key: '_modified',
-		value: function _modified(key) {
-			if (key === false) {
-				this.__modified = [];
-			} else if (key && this.__modified.indexOf(key) === -1) {
-				this.__modified.push(key);
-			}
-			return this.__modified;
+		key: '$modified',
+		value: function $modified(key) {
+			return BEModel.prototype.$modified.call(this, key);
 		}
 	}]);
 
@@ -133,30 +253,37 @@ var BECollection = (function (_BEArray) {
 	_inherits(BECollection, _BEArray);
 
 	function BECollection() {
-		var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+		var _this = this;
+
+		var data = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
 		var conf = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
 		_classCallCheck(this, BECollection);
 
-		_get(Object.getPrototypeOf(BECollection.prototype), 'constructor', this).call(this, [], conf);
 		var items = [];
-		if (options.alias) {
-			this.alias = options.alias;
-			if (options.filter) {
-				items = options.alias.filter(options.filter) || [];
-			} else {
-				items = options.alias.items || [];
-			}
-		} else {
-			items = options.items || options.objects || [];
+		if (typeof items == 'object') {
+			items = data.items || [];
+		} else if (Array.isArray(data)) {
+			items = data;
 		}
-		this.url = options.url;
 		for (var i = 0; i < items.length; i++) {
-			this.push(items[i]);
+			if (!(items[i] instanceof BEObject)) {
+				items[i] = new BEObject(items[i], conf);
+			}
 		}
-		if (items.length < options.count) {
-			this.push({});
+		_get(Object.getPrototypeOf(BECollection.prototype), 'constructor', this).call(this, items, conf);
+		if (typeof data == 'string') {
+			this.$url = data;
+		} else if (typeof items == 'object' && data.count) {
+			if (items.length < data.count) {
+				this.push(new BEObject({}, conf));
+			}
 		}
+		this.forEach(function (obj) {
+			var collections = BEModel.readRegistry(obj, 'collections') || [];
+			collections.push(_this);
+			BEModel.updateRegistry(obj, 'collections', collections);
+		});
 	}
 
 	/**
@@ -169,53 +296,180 @@ var BECollection = (function (_BEArray) {
   * @param {Object} conf An optional set of configuration params.
   */
 
+	/**
+  * Extend `Array.prototype.push`. Same input/output. Automatically transform plain objects in BEObject instances.
+  * (see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/push})
+  */
+
 	_createClass(BECollection, [{
 		key: 'push',
-		value: function push(obj) {
-			if (!(obj instanceof BEObject)) {
-				obj = new BEObject(obj, this._config());
+		value: function push() {
+			var _this2 = this;
+
+			for (var _len = arguments.length, objects = Array(_len), _key = 0; _key < _len; _key++) {
+				objects[_key] = arguments[_key];
 			}
-			Array.prototype.push.call(this, obj);
+
+			objects.forEach(function (obj) {
+				if (!(obj instanceof BEObject)) {
+					obj = new BEObject(obj, _this2.$config());
+				}
+				if (_this2.indexOf(obj) == -1) {
+					_this2.__addCollectionToObject(obj);
+					Array.prototype.push.call(_this2, obj);
+				}
+			});
+			return this.length;
 		}
+
+		/**
+   * Extend `Array.prototype.pop`. Same input/output.
+   * (see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/pop})
+   */
 	}, {
-		key: 'fetch',
-		value: function fetch(url) {
-			var _this = this,
+		key: 'pop',
+		value: function pop() {
+			for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+				args[_key2] = arguments[_key2];
+			}
+
+			var obj = Array.prototype.splice.apply(this, args);
+			this.__removeCollectionFromObject(obj);
+			return obj;
+		}
+
+		/**
+   * Extend `Array.prototype.shift`. Same input/output.
+   * (see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/shift})
+   */
+	}, {
+		key: 'shift',
+		value: function shift() {
+			for (var _len3 = arguments.length, args = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+				args[_key3] = arguments[_key3];
+			}
+
+			var obj = Array.prototype.shift.apply(this, args);
+			this.__removeCollectionFromObject(obj);
+			return obj;
+		}
+
+		/**
+   * Extend `Array.prototype.splice`. Same input/output.
+   * (see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/shift})
+   */
+	}, {
+		key: 'splice',
+		value: function splice() {
+			var _this3 = this;
+
+			for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+				args[_key4] = arguments[_key4];
+			}
+
+			var removed = Array.prototype.splice.apply(this, args);
+			if (removed) {
+				removed.forEach(function (obj) {
+					_this3.__removeCollectionFromObject(obj);
+				});
+			}
+			return removed;
+		}
+
+		/**
+   * Create a relation between the BECollection and its BEObject.
+   * @private
+   * @param {BEObject} obj The model to associate.
+   * @return {Boolean} The relation has been created.
+   */
+	}, {
+		key: '__addCollectionToObject',
+		value: function __addCollectionToObject(obj) {
+			var collections = BEModel.readRegistry(obj, 'collections') || [];
+			var io = collections.indexOf(this);
+			if (io == -1) {
+				collections.push(this);
+				BEModel.updateRegistry(obj, 'collections', collections);
+				return true;
+			}
+			return false;
+		}
+
+		/**
+   * Remove a relation between the BECollection and its BEObject.
+   * @private
+   * @param {BEObject} obj The model to unassociate.
+   * @return {Boolean} The relation has been removed.
+   */
+	}, {
+		key: '__removeCollectionFromObject',
+		value: function __removeCollectionFromObject(obj) {
+			var collections = BEModel.readRegistry(obj, 'collections') || [];
+			var io = collections.indexOf(this);
+			if (io !== -1) {
+				collections.splice(io, 1);
+				BEModel.updateRegistry(obj, 'collections', collections);
+				return true;
+			}
+			return false;
+		}
+
+		/**
+   * Perform a BEApi request to populate the collection.
+   * If the current model has not a valid url, reject the promise.
+   * At the end of the request, automatically set fetched items.
+   * @param {String} url The endpoint to fetch.
+   * @return {Promise}
+   */
+	}, {
+		key: '$fetch',
+		value: function $fetch(url) {
+			var _this4 = this,
 			    _arguments2 = arguments;
 
 			return new Promise(function (resolve, reject) {
-				if (_this.url || url) {
-					if (_this.alias) {
-						return _this.alias.fetch(_this.url || url || undefined);
+				if (_this4.$url || url) {
+					if (url) {
+						_this4.$url = url;
 					}
-					_this.splice(0, _this.length);
-					var beapi = new BEApi(_this._config());
-					beapi.get(_this.url || url).then(function (res) {
+					var beapi = new BEApi(_this4.$config());
+					beapi.get(_this4.$url).then(function (res) {
 						if (res && res.data && res.data.objects) {
 							for (var i = 0; i < res.data.objects.length; i++) {
 								var obj = res.data.objects[i];
-								_this.push(obj);
+								_this4.push(obj);
 							}
 						}
-						resolve.apply(_this, _arguments2);
+						resolve.apply(_this4, _arguments2);
 					}, function (err) {
-						reject.apply(_this, _arguments2);
+						reject.apply(_this4, _arguments2);
 					});
 				} else {
 					reject();
 				}
 			});
 		}
+
+		/**
+   * Perform a filter on a BECollection.
+   * @param {Object} filter A plain object to match.
+   * @return {Array}
+   */
 	}, {
-		key: 'filter',
-		value: function filter(f) {
+		key: '$filter',
+		value: function $filter(filter) {
 			return Array.prototype.filter.call(this, function (item) {
-				return item.is(f);
+				return item.is(filter);
 			});
 		}
+
+		/**
+   * Convert a BECollection into a plain array.
+   * @return {Array}
+   */
 	}, {
-		key: 'toArray',
-		value: function toArray() {
+		key: '$toArray',
+		value: function $toArray() {
 			return Array.prototype.slice.call(this, 0);
 		}
 	}]);
@@ -232,7 +486,8 @@ var BEObject = (function (_BEModel) {
 		_classCallCheck(this, BEObject);
 
 		_get(Object.getPrototypeOf(BEObject.prototype), 'constructor', this).call(this, conf);
-		this.set(data);
+		BEModel.updateRegistry(this, 'collections', []);
+		this.$set(data);
 	}
 
 	/**
@@ -248,17 +503,20 @@ var BEObject = (function (_BEModel) {
   */
 
 	_createClass(BEObject, [{
-		key: 'fetch',
-		value: function fetch() {
-			var _this2 = this;
+		key: '$fetch',
+		value: function $fetch() {
+			var _this5 = this;
 
 			return new Promise(function (resolve, reject) {
-				if (_this2.id || _this2.nickname) {
-					var promise = new BEApi(_this2._config()).get('objects/' + (_this2.id || _this2.nickname));
+				if (_this5.id || _this5.nickname) {
+					var promise = new BEApi(_this5.$config()).get('objects/' + (_this5.id || _this5.nickname));
 					promise.then(function (res) {
 						if (res && res.data && res.data.object) {
-							_this2.set(res.data.object);
-							_this2._modified(false);
+							_this5.$set(res.data.object);
+							if (_this5.$modified().indexOf('id')) {
+								_this5.$migrateRegistry();
+							}
+							_this5.$modified(false);
 							resolve(res);
 						} else {
 							reject(res);
@@ -281,23 +539,23 @@ var BEObject = (function (_BEModel) {
    * @return {Promise}
    */
 	}, {
-		key: 'save',
-		value: function save() {
-			var _this3 = this;
+		key: '$save',
+		value: function $save() {
+			var _this6 = this;
 
 			var data = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-			this.set(data);
-			var dataToSend = this.toJSON(this._modified());
+			this.$set(data);
+			var dataToSend = this.$toJSON(this.$modified());
 			dataToSend.id = this.id, dataToSend.nickname = this.nickname;
 			return new Promise(function (resolve, reject) {
-				var promise = new BEApi(_this3._config()).post('objects', {
+				var promise = new BEApi(_this6.$config()).post('objects', {
 					data: dataToSend
 				});
 				promise.then(function (res) {
 					if (res && res.data && res.data.object) {
-						_this3.set(res.data.object);
-						_this3._modified(false);
+						_this6.$set(res.data.object);
+						_this6.$modified(false);
 						resolve(res);
 					} else {
 						reject(res);
@@ -315,14 +573,14 @@ var BEObject = (function (_BEModel) {
    * @return {Promise}
    */
 	}, {
-		key: 'create',
-		value: function create() {
+		key: '$create',
+		value: function $create() {
 			var data = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-			if (!this.isNew()) {
+			if (!this.$isNew()) {
 				throw 'Object already created.';
 			}
-			return this.save(data);
+			return this.$save(data);
 		}
 
 		/**
@@ -331,21 +589,35 @@ var BEObject = (function (_BEModel) {
    * @return {Promise}
    */
 	}, {
-		key: 'remove',
-		value: function remove() {
-			var _this4 = this;
+		key: '$remove',
+		value: function $remove() {
+			var _this7 = this;
 
-			if (this.isNew()) {
-				throw 'Object has not a valid ID or a valid nickname.';
-			}
-			return new Promise(function (resolve, reject) {
-				var promise = new BEApi(_this4._config())['delete']('objects/' + (_this4.id || _this4.nickname));
-				promise.then(function (res) {
+			var promise = new Promise(function (resolve, reject) {
+				if (!_this7.$isNew()) {
+					var _promise = new BEApi(_this7.$config())['delete']('objects/' + (_this7.id || _this7.nickname));
+					_promise.then(function (res) {
+						resolve();
+					}, function (err) {
+						reject(err);
+					});
+				} else {
 					resolve();
-				}, function (err) {
-					reject(err);
-				});
+				}
 			});
+
+			promise.then(function () {
+				var collections = BEModel.readRegistry(_this7, 'collections');
+				collections.forEach(function (collection) {
+					var io = collection.indexOf(_this7);
+					if (io !== -1) {
+						collection.splice(io, 1);
+					}
+				});
+				BEModel.prototype.$remove.call(_this7);
+			});
+
+			return promise;
 		}
 
 		/**
@@ -353,9 +625,9 @@ var BEObject = (function (_BEModel) {
    * @return {BEObject} The clone model.
    */
 	}, {
-		key: 'clone',
-		value: function clone() {
-			return new BEObject(this.toJSON([], ['id']), this._config());
+		key: '$clone',
+		value: function $clone() {
+			return new BEObject(this.$toJSON([], ['id']), this.$config());
 		}
 
 		/**
@@ -363,8 +635,8 @@ var BEObject = (function (_BEModel) {
    * @return {Boolean}
    */
 	}, {
-		key: 'isNew',
-		value: function isNew() {
+		key: '$isNew',
+		value: function $isNew() {
 			return !this.id && !this.nickname;
 		}
 
@@ -373,14 +645,14 @@ var BEObject = (function (_BEModel) {
    * Automatically create BECollection for children and relations.* fields.
    * Automatically create a BEObject for the parent if `parent_id` is specified.
    * Automatically convert ISO string dates into {Date} objects.
-   * Add to the `__modified` the key that needs to be sync with the server.
+   * Add to the `_modified` the key that needs to be sync with the server.
    * @param {Object|String} data A set of data to set or a key to update.
    * @param {*} value The value to set to the `data` key string.
    * @return {BEObject} The instance.
    */
 	}, {
-		key: 'set',
-		value: function set(data, value) {
+		key: '$set',
+		value: function $set(data, value) {
 			if (data === undefined) data = {};
 
 			if (value !== undefined && typeof data == 'string') {
@@ -397,7 +669,7 @@ var BEObject = (function (_BEModel) {
 				if (!this.relations) {
 					this.relations = {};
 				}
-				this.relations[k] = new BECollection(relations[k], this._config());
+				this.relations[k] = new BECollection(relations[k], this.$config());
 			}
 
 			// create a BECollection for the `children` field
@@ -405,7 +677,7 @@ var BEObject = (function (_BEModel) {
 				this.children = new BECollection({
 					url: children.url,
 					count: children.count
-				}, this._config());
+				}, this.$config());
 				if (children.sections) {
 					this.sections = new BECollection({
 						alias: this.children,
@@ -414,7 +686,7 @@ var BEObject = (function (_BEModel) {
 						},
 						url: children.sections.url,
 						count: children.sections
-					}, this._config());
+					}, this.$config());
 				}
 			}
 
@@ -430,7 +702,7 @@ var BEObject = (function (_BEModel) {
 				// add to modified list
 				if (this[k] !== d) {
 					this[k] = d;
-					this._modified(k);
+					this.$modified(k);
 				}
 			}
 
@@ -453,9 +725,9 @@ var BEObject = (function (_BEModel) {
    * @return {Boolean}
    */
 	}, {
-		key: 'is',
-		value: function is(filter) {
-			var data = this.toJSON();
+		key: '$is',
+		value: function $is(filter) {
+			var data = this.$toJSON();
 			if (filter instanceof RegExp) {
 				for (var k in data) {
 					if (data[k].match(filter)) {
@@ -479,46 +751,27 @@ var BEObject = (function (_BEModel) {
 			}
 			return false;
 		}
-	}, {
-		key: 'query',
-		value: function query() {
-			var _this5 = this;
 
-			var queue = new BEApiQueue(this._config());
+		/**
+   * Start a query thread for the current Object instance.
+   * @return {BEApiQueue} A `BEApiQueue` instance scoped with the current Object.
+   */
+	}, {
+		key: '$query',
+		value: function $query() {
+			var _this8 = this;
+
+			var queue = new BEApiQueue(this.$config());
 			if ('id' in this && 'nickname' in this) {
 				queue.identity(this);
 			} else {
 				queue.objects(this.id || this.nickname);
 			}
 			queue.all(function (scope) {
-				_this5.set(scope);
-				_this5._modified(false);
+				_this8.$set(scope);
+				_this8.$modified(false);
 			});
 			return queue;
-		}
-	}, {
-		key: 'toJSON',
-		value: function toJSON(keep, remove) {
-			var res = {},
-			    data = this;
-
-			if (!Array.isArray(keep)) {
-				keep = [];
-			}
-			if (!Array.isArray(remove)) {
-				remove = [];
-			}
-			for (var k in data) {
-				if (BEObject.unsetFromData.indexOf(k) === -1 && typeof data[k] !== 'function' && (!keep || !keep.length || keep.indexOf(k) !== -1) && (!remove || !remove.length || remove.indexOf(k) === -1)) {
-					res[k] = data[k];
-				}
-			}
-			return res;
-		}
-	}], [{
-		key: 'unsetFromData',
-		get: function get() {
-			return ['__modified', '__config'];
 		}
 	}]);
 
@@ -533,7 +786,7 @@ var BEXhr = (function () {
 	/**
   * @class BEApiRegistry
   * @classdesc A registry of BEApi configuration.
-  * Everywhere, in your JavaScript application, you can use `BEApiRegistry.getInstance(key)` to retrieve a BEApi configration.
+  * Everywhere, in your JavaScript application, you can use `BEApiRegistry.get(key)` to retrieve a BEApi configration.
   * Register BEApi configurations is lighter and simpler than register instances.
   * Use BEApiRegistry to share configuration between models, interfaces and queues.
   */
@@ -704,8 +957,8 @@ var BEApiRegistry = (function () {
    * @return {Object} The configuration.
    */
 	}, {
-		key: 'getInstance',
-		value: function getInstance(key) {
+		key: 'get',
+		value: function get(key) {
 			BEApiRegistry._instances = BEApiRegistry._instances || {};
 			if (typeof BEApiRegistry._instances[key] !== 'undefined') {
 				return BEApiRegistry._instances[key];
@@ -753,8 +1006,8 @@ function _processInput() {
 function _extend() {
 	var res = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-	for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-		args[_key - 1] = arguments[_key];
+	for (var _len5 = arguments.length, args = Array(_len5 > 1 ? _len5 - 1 : 0), _key5 = 1; _key5 < _len5; _key5++) {
+		args[_key5 - 1] = arguments[_key5];
 	}
 
 	for (var i = 0; i < args.length; i++) {
@@ -780,6 +1033,14 @@ var BEApi = (function () {
 
 		_classCallCheck(this, BEApi);
 
+		if (typeof conf == 'string') {
+			var opt = BEApiRegistry.get(conf);
+			if (opt) {
+				conf = opt;
+			} else {
+				conf = {};
+			}
+		}
 		// if the base url is not provided, try to extract it from the `window.location`.
 		if (!conf.baseUrl) {
 			try {
@@ -788,10 +1049,9 @@ var BEApi = (function () {
 				throw 'Missing valid `baseUrl`.';
 			}
 		}
-
 		this.conf = conf;
 		// add the current configuration to the BEApiRegistry.
-		BEApiRegistry.add(this.configKey, this.conf);
+		BEApiRegistry.add(this.configKey, conf);
 	}
 
 	/**
@@ -820,11 +1080,12 @@ var BEApi = (function () {
    * - Automatically set the authorization headers
    * - Automatically set the frontend base url when a not full url is passed
    * @private
-   * @param {Object} opt A set of options to pass to the Ajax request.
+   * @param {Object} options A set of options to pass to the Ajax request.
    * @return {Object} A complete set of options.
    */
-		value: function _processOptions(opt) {
-			var res = this.conf;
+		value: function _processOptions(options) {
+			var opt = _extend({}, options);
+			var res = _extend({}, this.conf);
 			for (var k in opt) {
 				res[k] = opt[k];
 			}
@@ -868,16 +1129,16 @@ var BEApi = (function () {
 	}, {
 		key: '_processXHR',
 		value: function _processXHR() {
-			var _this6 = this;
+			var _this9 = this;
 
 			var opt = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
 			if (this.getAccessToken() && this.isTokenExpired() && !opt.skipRefreshToken) {
 				return new Promise(function (resolve, reject) {
-					var refreshCompletePromise = _this6.refreshToken().then();
+					var refreshCompletePromise = _this9.refreshToken().then();
 					refreshCompletePromise.then(function () {
 						delete opt.headers['Authorization'];
-						opt = _this6._processOptions(opt);
+						opt = _this9._processOptions(opt);
 						BEXhr.exec(opt).then(function (res) {
 							resolve(res);
 						}, function (xhr) {
@@ -902,6 +1163,7 @@ var BEApi = (function () {
 		value: function _processAuth() {
 			var opt = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
+			opt = _extend({}, opt);
 			opt.url = 'auth';
 			opt.skipRefreshToken = true;
 			var storage = BEApi.storage,
@@ -1238,13 +1500,13 @@ var BEApi = (function () {
 
 var BEApiQueue = (function () {
 	function BEApiQueue(conf) {
-		var _this7 = this;
+		var _this10 = this;
 
 		_classCallCheck(this, BEApiQueue);
 
 		if (typeof conf === 'string') {
 			// if conf is a string, try to read configuration from BEApiRegistry
-			this.conf = BEApiRegistry.getInstance(conf);
+			this.conf = BEApiRegistry.get(conf);
 		} else if (conf instanceof BEApi) {
 			// if conf is a BEApi instance, grab the configuration with `BEApi.conf` property
 			this.conf = conf.conf;
@@ -1256,8 +1518,8 @@ var BEApiQueue = (function () {
 		}
 		// setup the global promise and resolvers
 		this._promise = new Promise(function (resolve, reject) {
-			_this7._resolver = resolve;
-			_this7._rejecter = reject;
+			_this10._resolver = resolve;
+			_this10._rejecter = reject;
 		});
 		this.reset();
 	}
@@ -1447,8 +1709,8 @@ var BEApiQueue = (function () {
 
 			(function (method) {
 				BEApiQueue.prototype[method] = function () {
-					for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-						args[_key2] = arguments[_key2];
+					for (var _len6 = arguments.length, args = Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
+						args[_key6] = arguments[_key6];
 					}
 
 					this.add(new BEApiQueueTask(method, args));
@@ -1465,7 +1727,7 @@ var BEApiQueue = (function () {
 })();
 
 var BEApiQueueTask = function BEApiQueueTask(method) {
-	var _this8 = this;
+	var _this11 = this;
 
 	var args = arguments.length <= 1 || arguments[1] === undefined ? [] : arguments[1];
 
@@ -1477,8 +1739,8 @@ var BEApiQueueTask = function BEApiQueueTask(method) {
 	this.args = args;
 	// instantiate the task local promise
 	this.promise = new Promise(function (resolve, reject) {
-		_this8.resolve = resolve;
-		_this8.reject = reject;
+		_this11.resolve = resolve;
+		_this11.reject = reject;
 	});
 }
 
@@ -1522,8 +1784,8 @@ var BEApiQueueBaseMethod = (function () {
 	_createClass(BEApiQueueBaseMethod, [{
 		key: 'input',
 		value: function input(scope) {
-			for (var _len3 = arguments.length, args = Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
-				args[_key3 - 1] = arguments[_key3];
+			for (var _len7 = arguments.length, args = Array(_len7 > 1 ? _len7 - 1 : 0), _key7 = 1; _key7 < _len7; _key7++) {
+				args[_key7 - 1] = arguments[_key7];
 			}
 
 			return new Promise(function (resolve) {
@@ -1597,10 +1859,10 @@ var BEApiQueueIdentity = (function (_BEApiQueueBaseMethod) {
 	}, {
 		key: 'transform',
 		value: function transform(scope, res) {
-			var _this9 = this;
+			var _this12 = this;
 
 			return new Promise(function (resolve, reject) {
-				resolve(_this9.options.data);
+				resolve(_this12.options.data);
 			});
 		}
 	}]);
@@ -1625,11 +1887,11 @@ var BEApiQueueObjects = (function (_BEApiQueueBaseMethod2) {
 	_createClass(BEApiQueueObjects, [{
 		key: 'input',
 		value: function input(scope) {
-			var _this10 = this;
+			var _this13 = this;
 
 			return new Promise(function (resolve) {
 				resolve([{
-					url: (_this10.options.type ? _this10.options.type + 's' : 'objects') + (_this10.options.id ? '/' + _this10.options.id : '')
+					url: (_this13.options.type ? _this13.options.type + 's' : 'objects') + (_this13.options.id ? '/' + _this13.options.id : '')
 				}]);
 			});
 		}
@@ -1664,14 +1926,14 @@ var BEApiQueuePoster = (function (_BEApiQueueBaseMethod3) {
 	_createClass(BEApiQueuePoster, [{
 		key: 'input',
 		value: function input(scope) {
-			var _this11 = this;
+			var _this14 = this;
 
 			return new Promise(function (resolve) {
 				var suffix = '';
-				if (_this11.options) {
+				if (_this14.options) {
 					suffix = '?';
-					for (var k in _this11.options) {
-						suffix += k + '=' + _this11.options[k];
+					for (var k in _this14.options) {
+						suffix += k + '=' + _this14.options[k];
 					}
 				}
 				resolve([{
@@ -1710,23 +1972,23 @@ var BEApiQueueRelation = (function (_BEApiQueueBaseMethod4) {
 	_createClass(BEApiQueueRelation, [{
 		key: 'input',
 		value: function input(scope) {
-			var _this12 = this;
+			var _this15 = this;
 
 			return new Promise(function (resolve) {
 				resolve([{
-					url: 'objects/' + scope.id + '/relations/' + _this12.options.relName
+					url: 'objects/' + scope.id + '/relations/' + _this15.options.relName
 				}]);
 			});
 		}
 	}, {
 		key: 'transform',
 		value: function transform(scope, res) {
-			var _this13 = this;
+			var _this16 = this;
 
 			return new Promise(function (resolve, reject) {
 				scope['relations'] = scope['relations'] || {};
-				scope['relations'][_this13.options.relName] = scope['relations'][_this13.options.relName] || {};
-				scope['relations'][_this13.options.relName].objects = res.data.objects;
+				scope['relations'][_this16.options.relName] = scope['relations'][_this16.options.relName] || {};
+				scope['relations'][_this16.options.relName].objects = res.data.objects;
 				resolve(scope);
 			});
 		}
