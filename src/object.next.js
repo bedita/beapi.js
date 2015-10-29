@@ -158,7 +158,7 @@ export class BEObject extends BEModel {
 		}
         let relations = data.relations || {};
         let children = data.children || {};
-		let isoDateRegex = /\d{4,}\-\d{2,}\-\d{2,}T\d{2,}:\d{2,}:\d{2,}\+\d{4,}/;
+		let isoDateRegex = /\d{4,}\-\d{2,}\-\d{2,}T\d{2,}:\d{2,}:\d{2,}\+(\d{4,}|\d{2,}\:\d{2,})/;
 
 		// iterate relations and create BECollection for each key
         for (let k in relations) {
@@ -189,7 +189,7 @@ export class BEObject extends BEModel {
         for (let k in data) {
             let d = data[k];
             //check if iso date
-            if (typeof d == 'string' && d.length == 24 && isoDateRegex.test(d)) {
+            if (typeof d == 'string' && isoDateRegex.test(d)) {
                 let convert = new Date(d);
                 if (!isNaN(convert.valueOf())) {
                     d = convert;
@@ -206,7 +206,7 @@ export class BEObject extends BEModel {
         if (data.parent_id) {
             this.parent = new BEObject({
                 id: data.parent_id
-            });
+            }, this.$config());
             delete this.parent_id;
         } else {
             delete this.parent;

@@ -99,7 +99,7 @@ export class BEModel {
 	 */
 	static readRegistry(obj, key) {
 		this.registry = this.registry || {};
-		let udid = (obj instanceof BEModel) ? obj.$id() : obj;
+		let udid = (typeof obj.$id === 'function') ? obj.$id() : obj;
 		if (udid) {
 			this.registry[udid] = this.registry[udid] || {};
 			return this.registry[udid][key];
@@ -114,7 +114,7 @@ export class BEModel {
 	 */
 	static updateRegistry(obj, key, value) {
 		this.registry = this.registry || {};
-		let udid = (obj instanceof BEModel) ? obj.$id() : obj;
+		let udid = (typeof obj.$id === 'function') ? obj.$id() : obj;
 		if (udid) {
 			this.registry[udid] = this.registry[udid] || {};
 			this.registry[udid][key] = value;
@@ -129,7 +129,7 @@ export class BEModel {
 	 */
 	static removeFromRegistry(obj) {
 		this.registry = this.registry || {};
-		let udid = (obj instanceof BEModel) ? obj.$id() : obj;
+		let udid = (typeof obj.$id === 'function') ? obj.$id() : obj;
 		if (udid) {
 			delete this.registry[udid];
 		}

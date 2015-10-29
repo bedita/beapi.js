@@ -160,7 +160,7 @@ export class BECollection extends BEArray {
 	 * @return {Array}
 	 */
 	$filter(filter) {
-		return Array.prototype.filter.call(this, (item) => item.is(filter));
+		return Array.prototype.filter.call(this, (item) => item.$is(filter));
 	}
 
 	/**

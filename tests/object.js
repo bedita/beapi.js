@@ -34,6 +34,7 @@ describe('BEObject', function() {
             expect(object).not.toBe(null);
             expect(typeof object.id).toEqual('number');
             expect(typeof object.nickname).toEqual('string');
+            expect(object.created instanceof Date).toEqual(true);
         });
     });
 	describe('create an object simulating token expiration', function() {
