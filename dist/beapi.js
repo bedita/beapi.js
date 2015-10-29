@@ -513,9 +513,6 @@ var BEObject = (function (_BEModel) {
 					promise.then(function (res) {
 						if (res && res.data && res.data.object) {
 							_this5.$set(res.data.object);
-							if (_this5.$modified().indexOf('id')) {
-								_this5.$migrateRegistry();
-							}
 							_this5.$modified(false);
 							resolve(res);
 						} else {
