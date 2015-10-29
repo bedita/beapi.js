@@ -33,9 +33,6 @@ export class BEObject extends BEModel {
                 promise.then((res) => {
                     if (res && res.data && res.data.object) {
                         this.$set(res.data.object);
-						if (this.$modified().indexOf('id')) {
-							this.$migrateRegistry();
-						}
 						this.$modified(false);
 						resolve(res);
                     } else {
