@@ -1,7 +1,7 @@
 /**
  * @class BEApiRegistry
  * @classdesc A registry of BEApi configuration.
- * Everywhere, in your JavaScript application, you can use `BEApiRegistry.getInstance(key)` to retrieve a BEApi configration.
+ * Everywhere, in your JavaScript application, you can use `BEApiRegistry.get(key)` to retrieve a BEApi configration.
  * Register BEApi configurations is lighter and simpler than register instances.
  * Use BEApiRegistry to share configuration between models, interfaces and queues.
  */
@@ -22,7 +22,7 @@ export class BEApiRegistry {
 	 * @param {String} key The key to use to read the configuration.
 	 * @return {Object} The configuration.
 	 */
-	static getInstance(key) {
+	static get(key) {
 		BEApiRegistry._instances = BEApiRegistry._instances || {};
 		if (typeof BEApiRegistry._instances[key] !== 'undefined') {
 			return BEApiRegistry._instances[key];

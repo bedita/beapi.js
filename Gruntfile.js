@@ -117,7 +117,7 @@ grunt.initConfig({
         },
         unit: {
             files: [
-                { src: ['tests/conf.js', 'tests/*.js'] }
+                { src: ['tests/conf.js', 'tests/beapi.js', 'tests/object.js', 'tests/collection.js'] }
             ]
         }
     }

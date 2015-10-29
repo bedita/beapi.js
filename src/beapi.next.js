@@ -44,6 +44,14 @@ function _extend(res = {}, ...args) {
 export class BEApi {
 
 	constructor(conf = {}) {
+		if (typeof conf == 'string') {
+			let opt = BEApiRegistry.get(conf);
+			if (opt) {
+				conf = opt;
+			} else {
+				conf = {};
+			}
+		}
 		// if the base url is not provided, try to extract it from the `window.location`.
 		if (!conf.baseUrl) {
 			try {
@@ -52,10 +60,9 @@ export class BEApi {
 		        throw 'Missing valid `baseUrl`.';
 	    	}
 		}
-
 		this.conf = conf;
 		// add the current configuration to the BEApiRegistry.
-		BEApiRegistry.add(this.configKey, this.conf);
+		BEApiRegistry.add(this.configKey, conf);
 	}
 
 	/**
@@ -115,11 +122,12 @@ export class BEApi {
 	 * - Automatically set the authorization headers
 	 * - Automatically set the frontend base url when a not full url is passed
 	 * @private
-	 * @param {Object} opt A set of options to pass to the Ajax request.
+	 * @param {Object} options A set of options to pass to the Ajax request.
 	 * @return {Object} A complete set of options.
 	 */
-	_processOptions(opt) {
-		let res = this.conf;
+	_processOptions(options) {
+		let opt = _extend({}, options);
+		let res = _extend({}, this.conf);
 		for (let k in opt) {
             res[k] = opt[k];
         }
@@ -187,6 +195,7 @@ export class BEApi {
 	 * @return {Promise} The Ajax request Promise.
 	 */
 	_processAuth(opt = {}) {
+		opt = _extend({}, opt);
         opt.url = 'auth';
 		opt.skipRefreshToken = true;
         let storage = BEApi.storage,

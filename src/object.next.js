@@ -16,7 +16,8 @@ export class BEObject extends BEModel {
 
 	constructor(data = {}, conf) {
 		super(conf);
-        this.set(data);
+		BEModel.updateRegistry(this, 'collections', []);
+        this.$set(data);
     }
 
 	/**
@@ -25,14 +26,17 @@ export class BEObject extends BEModel {
 	 * At the end of the request, automatically set fetched data.
 	 * @return {Promise}
 	 */
-    fetch() {
+    $fetch() {
         return new Promise((resolve, reject) => {
             if (this.id || this.nickname) {
-                let promise = new BEApi(this._config()).get('objects/' + (this.id || this.nickname));
+                let promise = new BEApi(this.$config()).get('objects/' + (this.id || this.nickname));
                 promise.then((res) => {
                     if (res && res.data && res.data.object) {
-                        this.set(res.data.object);
-						this._modified(false);
+                        this.$set(res.data.object);
+						if (this.$modified().indexOf('id')) {
+							this.$migrateRegistry();
+						}
+						this.$modified(false);
 						resolve(res);
                     } else {
 						reject(res);
@@ -54,19 +58,19 @@ export class BEObject extends BEModel {
 	 * @param {Object} data Optional data to set before save.
 	 * @return {Promise}
 	 */
-	save(data = {}) {
-		this.set(data);
-		let dataToSend = this.toJSON( this._modified() );
+	$save(data = {}) {
+		this.$set(data);
+		let dataToSend = this.$toJSON( this.$modified() );
 			dataToSend.id = this.id,
 			dataToSend.nickname = this.nickname;
 		return new Promise((resolve, reject) => {
-			let promise = new BEApi(this._config()).post('objects', {
+			let promise = new BEApi(this.$config()).post('objects', {
 				data: dataToSend
 			});
             promise.then((res) => {
                 if (res && res.data && res.data.object) {
-                    this.set(res.data.object);
-					this._modified(false);
+                    this.$set(res.data.object);
+					this.$modified(false);
 					resolve(res);
                 } else {
 					reject(res);
@@ -83,11 +87,11 @@ export class BEObject extends BEModel {
 	 * @param {Object} data Optional data to set before creation.
 	 * @return {Promise}
 	 */
-	create(data = {}) {
-		if (!this.isNew()) {
+	$create(data = {}) {
+		if (!this.$isNew()) {
 			throw 'Object already created.';
 		}
-		return this.save(data);
+		return this.$save(data);
 	}
 
 	/**
@@ -95,33 +99,47 @@ export class BEObject extends BEModel {
 	 * @throws If the model has not a valid ID or a valid nickname.
 	 * @return {Promise}
 	 */
-	remove() {
-		if (this.isNew()) {
-			throw 'Object has not a valid ID or a valid nickname.';
-		}
-		return new Promise((resolve, reject) => {
-			let promise = new BEApi(this._config()).delete('objects/' + (this.id || this.nickname));
-            promise.then(function(res) {
-                resolve();
-            }, function (err) {
-				reject(err);
-            });
+	$remove() {
+		let promise = new Promise((resolve, reject) => {
+			if (!this.$isNew()) {
+				let promise = new BEApi(this.$config()).delete('objects/' + (this.id || this.nickname));
+	            promise.then((res) => {
+	                resolve();
+	            }, (err) => {
+					reject(err);
+	            });
+			} else {
+				resolve();
+			}
 		});
+
+		promise.then(() => {
+			let collections = BEModel.readRegistry(this, 'collections');
+			collections.forEach((collection) => {
+				let io = collection.indexOf(this);
+				if (io !== -1) {
+					collection.splice(io, 1);
+				}
+			});
+			BEModel.prototype.$remove.call(this);
+		});
+
+		return promise;
 	}
 
 	/**
 	 * Clone the model.
 	 * @return {BEObject} The clone model.
 	 */
-	clone() {
-		return new BEObject(this.toJSON([], ['id']), this._config());
+	$clone() {
+		return new BEObject(this.$toJSON([], ['id']), this.$config());
 	}
 
 	/**
 	 * Check if the model is new (client-side created).
 	 * @return {Boolean}
 	 */
-	isNew() {
+	$isNew() {
 		return (!this.id && !this.nickname);
 	}
 
@@ -130,12 +148,12 @@ export class BEObject extends BEModel {
 	 * Automatically create BECollection for children and relations.* fields.
 	 * Automatically create a BEObject for the parent if `parent_id` is specified.
 	 * Automatically convert ISO string dates into {Date} objects.
-	 * Add to the `__modified` the key that needs to be sync with the server.
+	 * Add to the `_modified` the key that needs to be sync with the server.
 	 * @param {Object|String} data A set of data to set or a key to update.
 	 * @param {*} value The value to set to the `data` key string.
 	 * @return {BEObject} The instance.
 	 */
-    set(data = {}, value) {
+    $set(data = {}, value) {
 		if (value !== undefined && typeof data == 'string') {
 			let key = data;
 			data = {};
@@ -150,7 +168,7 @@ export class BEObject extends BEModel {
             if (!this.relations) {
                 this.relations = {};
             }
-			this.relations[k] = new BECollection(relations[k], this._config());
+			this.relations[k] = new BECollection(relations[k], this.$config());
         }
 
 		// create a BECollection for the `children` field
@@ -158,7 +176,7 @@ export class BEObject extends BEModel {
             this.children = new BECollection({
                 url: children.url,
                 count: children.count
-            }, this._config());
+            }, this.$config());
             if (children.sections) {
                 this.sections = new BECollection({
                     alias: this.children,
@@ -167,7 +185,7 @@ export class BEObject extends BEModel {
                     },
                     url: children.sections.url,
                     count: children.sections
-                }, this._config());
+                }, this.$config());
             }
         }
 
@@ -183,7 +201,7 @@ export class BEObject extends BEModel {
 			// add to modified list
             if (this[k] !== d) {
                 this[k] = d;
-				this._modified(k);
+				this.$modified(k);
             }
         }
 
@@ -205,8 +223,8 @@ export class BEObject extends BEModel {
 	 * @param {Object|String|RegExp} filter The filter to use. Could be any dataset, a simple string, or a regular expression.
 	 * @return {Boolean}
 	 */
-    is(filter) {
-		let data = this.toJSON();
+    $is(filter) {
+		let data = this.$toJSON();
 		if (filter instanceof RegExp) {
 			for (let k in data) {
 				if (data[k].match(filter)) {
@@ -231,40 +249,22 @@ export class BEObject extends BEModel {
         return false;
     }
 
-	query() {
-		let queue = new BEApiQueue(this._config());
+	/**
+	 * Start a query thread for the current Object instance.
+	 * @return {BEApiQueue} A `BEApiQueue` instance scoped with the current Object.
+	 */
+	$query() {
+		let queue = new BEApiQueue(this.$config());
 		if ('id' in this && 'nickname' in this) {
 			queue.identity(this);
 		} else {
 			queue.objects(this.id || this.nickname);
 		}
 		queue.all((scope) => {
-			this.set(scope);
-			this._modified(false);
+			this.$set(scope);
+			this.$modified(false);
 		});
 		return queue;
-	}
-
-	toJSON(keep, remove) {
-		let res = {},
-			data = this;
-
-		if (!Array.isArray(keep)) {
-			keep = [];
-		}
-		if (!Array.isArray(remove)) {
-			remove = [];
-		}
-		for (let k in data) {
-			if (BEObject.unsetFromData.indexOf(k) === -1 && typeof data[k] !== 'function' && (!keep || !keep.length || keep.indexOf(k) !== -1) && (!remove || !remove.length || remove.indexOf(k) === -1)) {
-				res[k] = data[k];
-			}
-		}
-		return res;
-	}
-
-	static get unsetFromData() {
-		return ['__modified', '__config'];
 	}
 
 }

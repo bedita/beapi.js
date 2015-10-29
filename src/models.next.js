@@ -8,8 +8,17 @@
 export class BEModel {
 
 	constructor(conf) {
-		this.__config = conf;
-		this.__modified = [];
+		this.$udid = BEModel.generateId();
+		BEModel.updateRegistry(this, 'conf', conf);
+		BEModel.updateRegistry(this, 'modified', []);
+	}
+
+	/**
+	 * Get the client registry ID.
+	 * @return {String|Number} The client registry ID.
+	 */
+	$id() {
+		return this.$udid;
 	}
 
 	/**
@@ -17,11 +26,11 @@ export class BEModel {
 	 * @param {Object} conf An optional set of configuration params.
 	 * @return {Object} The current configuration set.
 	 */
-	_config(conf) {
+	$config(conf) {
 		if (conf) {
-			this.__config = conf;
+			return BEModel.updateRegistry(this, 'conf', conf);
 		}
-		return this.__config;
+		return BEModel.readRegistry(this, 'conf') || {};
 	}
 
 	/**
@@ -29,13 +38,101 @@ export class BEModel {
 	 * @param {String|Boolean} key An optional field name which needs to be synced. If `false` is passed, the array will be resetted.
 	 * @return {Array} A list of fields which need to be synced.
 	 */
-	_modified(key) {
+	$modified(key) {
+		let modified = BEModel.readRegistry(this, 'modified') || [];
 		if (key === false) {
-			this.__modified = [];
-		} else if (key && this.__modified.indexOf(key) === -1) {
-			this.__modified.push(key);
+			return BEModel.updateRegistry(this, 'modified', []);
+		} else if (key && modified.indexOf(key) === -1) {
+			modified.push(key);
+			return BEModel.updateRegistry(this, 'modified', modified);
 		}
-		return this.__modified;
+		return BEModel.readRegistry(this, 'modified');
+	}
+
+	/**
+	 * Destroy a model and remove its references from the registry.
+	 * @return {Boolean} The model has actually been removed.
+	 */
+	$remove() {
+		return BEModel.removeFromRegistry(this);
+	}
+
+	/**
+	 * Returns a plain javascript object with the model data.
+	 * @return {Object}
+	 */
+	$toJSON(keep, remove) {
+		let res = {},
+			data = this;
+
+		if (!Array.isArray(keep)) {
+			keep = [];
+		}
+		if (!Array.isArray(remove)) {
+			remove = [];
+		}
+		for (let k in data) {
+			if (k[0] !== '$') {
+				res[k] = data[k];
+			}
+		}
+		return res;
+	}
+
+	/**
+	 * Generate an unique id.
+	 * @static
+	 * @return {String|Number} An unique id.
+	 */
+	static generateId() {
+		this.__generated = this.__generated || 0;
+		let id = '$' + this.__generated;
+		this.__generated += 1;
+		return id;
+	}
+
+	/**
+	 * Read a value stored in the registry for a specific model.
+	 * @static
+	 * @param {Object|String|Number} The model or its registry id.
+	 * @return {*} The stored value.
+	 */
+	static readRegistry(obj, key) {
+		this.registry = this.registry || {};
+		let udid = (obj instanceof BEModel) ? obj.$id() : obj;
+		if (udid) {
+			this.registry[udid] = this.registry[udid] || {};
+			return this.registry[udid][key];
+		}
+	}
+
+	/**
+	 * Update a value stored in the registry for a specific model.
+	 * @static
+	 * @param {Object|String|Number} The model or its registry id.
+	 * @return {*} The stored value.
+	 */
+	static updateRegistry(obj, key, value) {
+		this.registry = this.registry || {};
+		let udid = (obj instanceof BEModel) ? obj.$id() : obj;
+		if (udid) {
+			this.registry[udid] = this.registry[udid] || {};
+			this.registry[udid][key] = value;
+			return value;
+		}
+	}
+
+	/**
+	 * Remove a model entry from the registry.
+	 * @static
+	 * @param {Object|String|Number} The model or its registry id.
+	 */
+	static removeFromRegistry(obj) {
+		this.registry = this.registry || {};
+		let udid = (obj instanceof BEModel) ? obj.$id() : obj;
+		if (udid) {
+			delete this.registry[udid];
+		}
 	}
 
 }
@@ -50,9 +147,18 @@ export class BEModel {
  */
 export class BEArray extends Array {
 
-	constructor(items, conf) {
+	constructor(items = [], conf) {
 		super(items);
-		this.__config = conf;
+		this.$udid = BEModel.generateId();
+		BEModel.updateRegistry(this, 'conf', conf);
+	}
+
+	/**
+	 * Get the client registry ID.
+	 * @return {String|Number} The client registry ID.
+	 */
+	$id() {
+		return BEModel.prototype.$id.call(this);
 	}
 
 	/**
@@ -60,11 +166,8 @@ export class BEArray extends Array {
 	 * @param {Object} conf An optional set of configuration params.
 	 * @return {Object} The current configuration set.
 	 */
-	_config(conf) {
-		if (conf) {
-			this.__config = conf;
-		}
-		return this.__config;
+	$config(conf) {
+		return BEModel.prototype.$config.call(this, conf);
 	}
 
 	/**
@@ -72,13 +175,7 @@ export class BEArray extends Array {
 	 * @param {String|Boolean} key An optional field name which needs to be synced. If `false` is passed, the array will be resetted.
 	 * @return {Array} A list of fields which need to be synced.
 	 */
-	_modified(key) {
-		if (key === false) {
-			this.__modified = [];
-		} else if (key && this.__modified.indexOf(key) === -1) {
-			this.__modified.push(key);
-		}
-		return this.__modified;
+	$modified(key) {
+		return BEModel.prototype.$modified.call(this, key);
 	}
-
 }

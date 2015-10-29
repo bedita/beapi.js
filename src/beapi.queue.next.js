@@ -12,7 +12,7 @@ export class BEApiQueue {
 	constructor(conf) {
 		if (typeof conf === 'string') {
 			// if conf is a string, try to read configuration from BEApiRegistry
-			this.conf = BEApiRegistry.getInstance(conf);
+			this.conf = BEApiRegistry.get(conf);
 		} else if (conf instanceof BEApi) {
 			// if conf is a BEApi instance, grab the configuration with `BEApi.conf` property
 			this.conf = conf.conf;
