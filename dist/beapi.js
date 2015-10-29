@@ -146,7 +146,7 @@ var BEModel = (function () {
 		key: 'readRegistry',
 		value: function readRegistry(obj, key) {
 			this.registry = this.registry || {};
-			var udid = obj instanceof BEModel ? obj.$id() : obj;
+			var udid = typeof obj.$id === 'function' ? obj.$id() : obj;
 			if (udid) {
 				this.registry[udid] = this.registry[udid] || {};
 				return this.registry[udid][key];
@@ -163,7 +163,7 @@ var BEModel = (function () {
 		key: 'updateRegistry',
 		value: function updateRegistry(obj, key, value) {
 			this.registry = this.registry || {};
-			var udid = obj instanceof BEModel ? obj.$id() : obj;
+			var udid = typeof obj.$id === 'function' ? obj.$id() : obj;
 			if (udid) {
 				this.registry[udid] = this.registry[udid] || {};
 				this.registry[udid][key] = value;
@@ -180,7 +180,7 @@ var BEModel = (function () {
 		key: 'removeFromRegistry',
 		value: function removeFromRegistry(obj) {
 			this.registry = this.registry || {};
-			var udid = obj instanceof BEModel ? obj.$id() : obj;
+			var udid = typeof obj.$id === 'function' ? obj.$id() : obj;
 			if (udid) {
 				delete this.registry[udid];
 			}
@@ -459,7 +459,7 @@ var BECollection = (function (_BEArray) {
 		key: '$filter',
 		value: function $filter(filter) {
 			return Array.prototype.filter.call(this, function (item) {
-				return item.is(filter);
+				return item.$is(filter);
 			});
 		}
 
@@ -659,7 +659,7 @@ var BEObject = (function (_BEModel) {
 			}
 			var relations = data.relations || {};
 			var children = data.children || {};
-			var isoDateRegex = /\d{4,}\-\d{2,}\-\d{2,}T\d{2,}:\d{2,}:\d{2,}\+\d{4,}/;
+			var isoDateRegex = /\d{4,}\-\d{2,}\-\d{2,}T\d{2,}:\d{2,}:\d{2,}\+(\d{4,}|\d{2,}\:\d{2,})/;
 
 			// iterate relations and create BECollection for each key
 			for (var k in relations) {
@@ -690,7 +690,7 @@ var BEObject = (function (_BEModel) {
 			for (var k in data) {
 				var d = data[k];
 				//check if iso date
-				if (typeof d == 'string' && d.length == 24 && isoDateRegex.test(d)) {
+				if (typeof d == 'string' && isoDateRegex.test(d)) {
 					var convert = new Date(d);
 					if (!isNaN(convert.valueOf())) {
 						d = convert;
@@ -707,7 +707,7 @@ var BEObject = (function (_BEModel) {
 			if (data.parent_id) {
 				this.parent = new BEObject({
 					id: data.parent_id
-				});
+				}, this.$config());
 				delete this.parent_id;
 			} else {
 				delete this.parent;
