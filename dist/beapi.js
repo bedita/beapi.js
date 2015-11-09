@@ -331,7 +331,10 @@ var BECollection = (function (_BEArray) {
 				}
 			});
 			if (added.length) {
-				this.$trigger('add', added);
+				added.forEach(function (obj) {
+					_this2.$trigger('child:added', obj);
+				});
+				this.$trigger('added', added);
 			}
 			return this.length;
 		}
@@ -350,7 +353,8 @@ var BECollection = (function (_BEArray) {
 			var obj = Array.prototype.pop.apply(this, args);
 			if (obj) {
 				this.__removeCollectionFromObject(obj);
-				this.$trigger('remove', obj);
+				this.$trigger('child:removed', obj);
+				this.$trigger('removed', [obj]);
 			}
 			return obj;
 		}
@@ -369,7 +373,8 @@ var BECollection = (function (_BEArray) {
 			var obj = Array.prototype.shift.apply(this, args);
 			if (obj) {
 				this.__removeCollectionFromObject(obj);
-				this.$trigger('remove', obj);
+				this.$trigger('child:removed', obj);
+				this.$trigger('removed', [obj]);
 			}
 			return obj;
 		}
@@ -391,8 +396,9 @@ var BECollection = (function (_BEArray) {
 			if (removed) {
 				removed.forEach(function (obj) {
 					_this3.__removeCollectionFromObject(obj);
-					_this3.$trigger('remove', obj);
+					_this3.$trigger('child:removed', obj);
 				});
+				this.$trigger('removed', removed);
 			}
 			return removed;
 		}
@@ -687,6 +693,8 @@ var BEObject = (function (_BEModel) {
 	}, {
 		key: '$set',
 		value: function $set(data, value) {
+			var _this8 = this;
+
 			if (data === undefined) data = {};
 
 			var before = this.$toJSON();
@@ -761,6 +769,9 @@ var BEObject = (function (_BEModel) {
 			}
 			if (changed) {
 				this.$trigger('changed', this.$toJSON(), before);
+				(this.$collections || []).forEach(function (collection) {
+					collection.trigger('child:updated', _this8);
+				});
 			}
 			return this;
 		}
@@ -805,7 +816,7 @@ var BEObject = (function (_BEModel) {
 	}, {
 		key: '$query',
 		value: function $query() {
-			var _this8 = this;
+			var _this9 = this;
 
 			var queue = new BEApiQueue(this.$config);
 			if ('id' in this && 'nickname' in this) {
@@ -814,8 +825,8 @@ var BEObject = (function (_BEModel) {
 				queue.objects(this.id || this.nickname);
 			}
 			queue.all(function (scope) {
-				_this8.$set(scope);
-				_this8.$modified = [];
+				_this9.$set(scope);
+				_this9.$modified = [];
 			});
 			return queue;
 		}
@@ -1175,16 +1186,16 @@ var BEApi = (function () {
 	}, {
 		key: '_processXHR',
 		value: function _processXHR() {
-			var _this9 = this;
+			var _this10 = this;
 
 			var opt = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
 			if (this.getAccessToken() && this.isTokenExpired() && !opt.skipRefreshToken) {
 				return new Promise(function (resolve, reject) {
-					var refreshCompletePromise = _this9.refreshToken().then();
+					var refreshCompletePromise = _this10.refreshToken().then();
 					refreshCompletePromise.then(function () {
 						delete opt.headers['Authorization'];
-						opt = _this9._processOptions(opt);
+						opt = _this10._processOptions(opt);
 						BEXhr.exec(opt).then(function (res) {
 							resolve(res);
 						}, function (xhr) {
@@ -1546,7 +1557,7 @@ var BEApi = (function () {
 
 var BEApiQueue = (function () {
 	function BEApiQueue(conf) {
-		var _this10 = this;
+		var _this11 = this;
 
 		_classCallCheck(this, BEApiQueue);
 
@@ -1564,8 +1575,8 @@ var BEApiQueue = (function () {
 		}
 		// setup the global promise and resolvers
 		this._promise = new Promise(function (resolve, reject) {
-			_this10._resolver = resolve;
-			_this10._rejecter = reject;
+			_this11._resolver = resolve;
+			_this11._rejecter = reject;
 		});
 		this.reset();
 	}
@@ -1773,7 +1784,7 @@ var BEApiQueue = (function () {
 })();
 
 var BEApiQueueTask = function BEApiQueueTask(method) {
-	var _this11 = this;
+	var _this12 = this;
 
 	var args = arguments.length <= 1 || arguments[1] === undefined ? [] : arguments[1];
 
@@ -1785,8 +1796,8 @@ var BEApiQueueTask = function BEApiQueueTask(method) {
 	this.args = args;
 	// instantiate the task local promise
 	this.promise = new Promise(function (resolve, reject) {
-		_this11.resolve = resolve;
-		_this11.reject = reject;
+		_this12.resolve = resolve;
+		_this12.reject = reject;
 	});
 }
 
@@ -1905,10 +1916,10 @@ var BEApiQueueIdentity = (function (_BEApiQueueBaseMethod) {
 	}, {
 		key: 'transform',
 		value: function transform(scope, res) {
-			var _this12 = this;
+			var _this13 = this;
 
 			return new Promise(function (resolve, reject) {
-				resolve(_this12.options.data);
+				resolve(_this13.options.data);
 			});
 		}
 	}]);
@@ -1933,11 +1944,11 @@ var BEApiQueueObjects = (function (_BEApiQueueBaseMethod2) {
 	_createClass(BEApiQueueObjects, [{
 		key: 'input',
 		value: function input(scope) {
-			var _this13 = this;
+			var _this14 = this;
 
 			return new Promise(function (resolve) {
 				resolve([{
-					url: (_this13.options.type ? _this13.options.type + 's' : 'objects') + (_this13.options.id ? '/' + _this13.options.id : '')
+					url: (_this14.options.type ? _this14.options.type + 's' : 'objects') + (_this14.options.id ? '/' + _this14.options.id : '')
 				}]);
 			});
 		}
@@ -1972,14 +1983,14 @@ var BEApiQueuePoster = (function (_BEApiQueueBaseMethod3) {
 	_createClass(BEApiQueuePoster, [{
 		key: 'input',
 		value: function input(scope) {
-			var _this14 = this;
+			var _this15 = this;
 
 			return new Promise(function (resolve) {
 				var suffix = '';
-				if (_this14.options) {
+				if (_this15.options) {
 					suffix = '?';
-					for (var k in _this14.options) {
-						suffix += k + '=' + _this14.options[k];
+					for (var k in _this15.options) {
+						suffix += k + '=' + _this15.options[k];
 					}
 				}
 				resolve([{
@@ -2018,23 +2029,23 @@ var BEApiQueueRelation = (function (_BEApiQueueBaseMethod4) {
 	_createClass(BEApiQueueRelation, [{
 		key: 'input',
 		value: function input(scope) {
-			var _this15 = this;
+			var _this16 = this;
 
 			return new Promise(function (resolve) {
 				resolve([{
-					url: 'objects/' + scope.id + '/relations/' + _this15.options.relName
+					url: 'objects/' + scope.id + '/relations/' + _this16.options.relName
 				}]);
 			});
 		}
 	}, {
 		key: 'transform',
 		value: function transform(scope, res) {
-			var _this16 = this;
+			var _this17 = this;
 
 			return new Promise(function (resolve, reject) {
 				scope['relations'] = scope['relations'] || {};
-				scope['relations'][_this16.options.relName] = scope['relations'][_this16.options.relName] || {};
-				scope['relations'][_this16.options.relName].objects = res.data.objects;
+				scope['relations'][_this17.options.relName] = scope['relations'][_this17.options.relName] || {};
+				scope['relations'][_this17.options.relName].objects = res.data.objects;
 				resolve(scope);
 			});
 		}
