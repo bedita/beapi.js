@@ -7,7 +7,7 @@ A generic model for BE objects.
 * [BEObject](#BEObject)
   * [new BEObject(data, conf)](#new_BEObject_new)
   * [.$fetch()](#BEObject+$fetch) ⇒ <code>Promise</code>
-  * [.$save(data)](#BEObject+$save) ⇒ <code>Promise</code>
+  * [.$save(data, force)](#BEObject+$save) ⇒ <code>Promise</code>
   * [.$create(data)](#BEObject+$create) ⇒ <code>Promise</code>
   * [.$remove()](#BEObject+$remove) ⇒ <code>Promise</code>
   * [.$clone()](#BEObject+$clone) ⇒ <code>[BEObject](#BEObject)</code>
@@ -35,7 +35,7 @@ At the end of the request, automatically set fetched data.
 
 **Kind**: instance method of <code>[BEObject](#BEObject)</code>  
 <a name="BEObject+$save"></a>
-### beObject.$save(data) ⇒ <code>Promise</code>
+### beObject.$save(data, force) ⇒ <code>Promise</code>
 Perform a BEApi request to sync the model with the server.
 If the current model has not a valid ID or a valid nickname, a new object will be created.
 At the end of the request, automatically set new fetched data.
@@ -45,6 +45,7 @@ At the end of the request, automatically set new fetched data.
 | Param | Type | Description |
 | --- | --- | --- |
 | data | <code>Object</code> | Optional data to set before save. |
+| force | <code>Boolean</code> | Force request if there are not data to update. |
 
 <a name="BEObject+$create"></a>
 ### beObject.$create(data) ⇒ <code>Promise</code>

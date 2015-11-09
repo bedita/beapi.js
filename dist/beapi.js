@@ -2,7 +2,7 @@
 
 var _bind = Function.prototype.bind;
 
-var _get = function get(_x17, _x18, _x19) { var _again = true; _function: while (_again) { var object = _x17, property = _x18, receiver = _x19; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x17 = parent; _x18 = property; _x19 = receiver; _again = true; desc = parent = undefined; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+var _get = function get(_x18, _x19, _x20) { var _again = true; _function: while (_again) { var object = _x18, property = _x19, receiver = _x20; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x18 = parent; _x19 = property; _x20 = receiver; _again = true; desc = parent = undefined; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
@@ -116,7 +116,9 @@ var BEModel = (function () {
 			}
 			for (var k in data) {
 				if (k[0] !== '$') {
-					res[k] = data[k];
+					if ((!keep || keep.length == 0 || keep.indexOf(k) !== -1) && (!remove || remove.length == 0 || remove.indexOf(k) == -1)) {
+						res[k] = data[k];
+					}
 				}
 			}
 			return res;
@@ -533,6 +535,7 @@ var BEObject = (function (_BEModel) {
    * If the current model has not a valid ID or a valid nickname, a new object will be created.
    * At the end of the request, automatically set new fetched data.
    * @param {Object} data Optional data to set before save.
+   * @param {Boolean} force Force request if there are not data to update.
    * @return {Promise}
    */
 	}, {
@@ -541,11 +544,16 @@ var BEObject = (function (_BEModel) {
 			var _this6 = this;
 
 			var data = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+			var force = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 
 			this.$set(data);
-			var dataToSend = this.$toJSON(this.$modified());
+			var modified = this.$modified(),
+			    dataToSend = this.$toJSON(modified);
 			dataToSend.id = this.id, dataToSend.nickname = this.nickname;
 			return new Promise(function (resolve, reject) {
+				if (!force && modified.length == 0) {
+					return resolve(_this6.$toJSON());
+				}
 				var promise = new BEApi(_this6.$config()).post('objects', {
 					data: dataToSend
 				});
@@ -657,34 +665,31 @@ var BEObject = (function (_BEModel) {
 				data = {};
 				data[key] = value;
 			}
-			var relations = data.relations || {};
-			var children = data.children || {};
+			var relations = data.relations;
+			var children = data.children;
 			var isoDateRegex = /\d{4,}\-\d{2,}\-\d{2,}T\d{2,}:\d{2,}:\d{2,}\+(\d{4,}|\d{2,}\:\d{2,})/;
 
 			// iterate relations and create BECollection for each key
-			for (var k in relations) {
-				if (!this.relations) {
-					this.relations = {};
+			if (relations) {
+				for (var k in relations) {
+					if (!this.relations) {
+						this.relations = {};
+					}
+					this.relations[k] = new BECollection(relations[k], this.$config());
 				}
-				this.relations[k] = new BECollection(relations[k], this.$config());
+				delete data.relations;
 			}
 
 			// create a BECollection for the `children` field
 			if (children && !this.children) {
-				this.children = new BECollection({
-					url: children.url,
-					count: children.count
-				}, this.$config());
+				this.children = new BECollection(children.url, this.$config());
 				if (children.sections) {
-					this.sections = new BECollection({
-						alias: this.children,
-						filter: {
-							object_type: 'Section'
-						},
-						url: children.sections.url,
-						count: children.sections
-					}, this.$config());
+					this.sections = new BECollection(children.sections.url, this.$config());
 				}
+				if (children.contents) {
+					this.contents = new BECollection(children.contents.url, this.$config());
+				}
+				delete data.children;
 			}
 
 			for (var k in data) {

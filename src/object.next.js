@@ -53,14 +53,19 @@ export class BEObject extends BEModel {
 	 * If the current model has not a valid ID or a valid nickname, a new object will be created.
 	 * At the end of the request, automatically set new fetched data.
 	 * @param {Object} data Optional data to set before save.
+	 * @param {Boolean} force Force request if there are not data to update.
 	 * @return {Promise}
 	 */
-	$save(data = {}) {
+	$save(data = {}, force = false) {
 		this.$set(data);
-		let dataToSend = this.$toJSON( this.$modified() );
+		let modified = this.$modified(),
+			dataToSend = this.$toJSON(modified);
 			dataToSend.id = this.id,
 			dataToSend.nickname = this.nickname;
 		return new Promise((resolve, reject) => {
+			if (!force && modified.length == 0) {
+				return resolve(this.$toJSON());
+			}
 			let promise = new BEApi(this.$config()).post('objects', {
 				data: dataToSend
 			});
@@ -156,34 +161,31 @@ export class BEObject extends BEModel {
 			data = {};
 			data[key] = value;
 		}
-        let relations = data.relations || {};
-        let children = data.children || {};
+        let relations = data.relations;
+        let children = data.children;
 		let isoDateRegex = /\d{4,}\-\d{2,}\-\d{2,}T\d{2,}:\d{2,}:\d{2,}\+(\d{4,}|\d{2,}\:\d{2,})/;
 
 		// iterate relations and create BECollection for each key
-        for (let k in relations) {
-            if (!this.relations) {
-                this.relations = {};
-            }
-			this.relations[k] = new BECollection(relations[k], this.$config());
-        }
+		if (relations) {
+	        for (let k in relations) {
+	            if (!this.relations) {
+	                this.relations = {};
+	            }
+				this.relations[k] = new BECollection(relations[k], this.$config());
+	        }
+			delete data.relations;
+		}
 
 		// create a BECollection for the `children` field
         if (children && !this.children) {
-            this.children = new BECollection({
-                url: children.url,
-                count: children.count
-            }, this.$config());
-            if (children.sections) {
-                this.sections = new BECollection({
-                    alias: this.children,
-                    filter: {
-                        object_type: 'Section'
-                    },
-                    url: children.sections.url,
-                    count: children.sections
-                }, this.$config());
+            this.children = new BECollection(children.url, this.$config());
+			if (children.sections) {
+                this.sections = new BECollection(children.sections.url, this.$config());
             }
+			if (children.contents) {
+                this.contents = new BECollection(children.contents.url, this.$config());
+            }
+			delete data.children;
         }
 
         for (let k in data) {

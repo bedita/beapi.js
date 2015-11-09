@@ -73,7 +73,9 @@ export class BEModel {
 		}
 		for (let k in data) {
 			if (k[0] !== '$') {
-				res[k] = data[k];
+				if ((!keep || keep.length == 0 || keep.indexOf(k) !== -1) && (!remove || remove.length == 0 || remove.indexOf(k) == -1)) {
+					res[k] = data[k];
+				}
 			}
 		}
 		return res;
