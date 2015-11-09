@@ -43,15 +43,20 @@ export class BECollection extends BEArray {
 	 * (see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/push})
 	 */
 	push(...objects) {
+		let added = [];
 		objects.forEach((obj) => {
 			if (!(obj instanceof BEObject)) {
 				obj = new BEObject(obj, this.$config);
 			}
 			if (this.indexOf(obj) == -1) {
 				this.__addCollectionToObject(obj);
+				added.push(obj);
 				Array.prototype.push.call(this, obj);
 			}
 		});
+		if (added.length) {
+			this.$trigger('add', added);
+		}
 		return this.length;
 	}
 
@@ -62,6 +67,7 @@ export class BECollection extends BEArray {
 	pop(...args) {
 		let obj = Array.prototype.splice.apply(this, args);
 		this.__removeCollectionFromObject(obj);
+		this.$trigger('remove', obj);
 		return obj;
 	}
 
@@ -72,6 +78,7 @@ export class BECollection extends BEArray {
 	shift(...args) {
 		let obj = Array.prototype.shift.apply(this, args);
 		this.__removeCollectionFromObject(obj);
+		this.$trigger('remove', obj);
 		return obj;
 	}
 
@@ -84,6 +91,7 @@ export class BECollection extends BEArray {
 		if (removed) {
 			removed.forEach((obj) => {
 				this.__removeCollectionFromObject(obj);
+				this.$trigger('remove', obj);
 			});
 		}
 		return removed;
