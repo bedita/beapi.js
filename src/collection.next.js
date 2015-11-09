@@ -32,9 +32,9 @@ export class BECollection extends BEArray {
 			}
 		}
 		this.forEach((obj) => {
-			let collections = BEModel.readRegistry(obj, 'collections') || [];
+			let collections = obj.$collections || [];
 			collections.push(this);
-			BEModel.updateRegistry(obj, 'collections', collections);
+			obj.$collections = collections;
 		});
     }
 
@@ -45,7 +45,7 @@ export class BECollection extends BEArray {
 	push(...objects) {
 		objects.forEach((obj) => {
 			if (!(obj instanceof BEObject)) {
-				obj = new BEObject(obj, this.$config());
+				obj = new BEObject(obj, this.$config);
 			}
 			if (this.indexOf(obj) == -1) {
 				this.__addCollectionToObject(obj);
@@ -96,11 +96,11 @@ export class BECollection extends BEArray {
 	 * @return {Boolean} The relation has been created.
 	 */
 	__addCollectionToObject(obj) {
-		let collections = BEModel.readRegistry(obj, 'collections') || [];
+		let collections = obj.$collections || [];
 		let io = collections.indexOf(this);
 		if (io == -1) {
 			collections.push(this);
-			BEModel.updateRegistry(obj, 'collections', collections);
+			obj.$collections = collections;
 			return true;
 		}
 		return false;
@@ -113,11 +113,11 @@ export class BECollection extends BEArray {
 	 * @return {Boolean} The relation has been removed.
 	 */
 	__removeCollectionFromObject(obj) {
-		let collections = BEModel.readRegistry(obj, 'collections') || [];
+		let collections = obj.$collections || [];
 		let io = collections.indexOf(this);
 		if (io !== -1) {
 			collections.splice(io, 1);
-			BEModel.updateRegistry(obj, 'collections', collections);
+			obj.$collections = collections;
 			return true;
 		}
 		return false;
@@ -136,12 +136,20 @@ export class BECollection extends BEArray {
 				if (url) {
 					this.$url = url;
 				}
-				let beapi = new BEApi(this.$config());
+				let ids = this.map(function () {
+					return this.id || this.$id();
+				});
+				let beapi = new BEApi(this.$config);
                 beapi.get(this.$url).then((res) => {
                     if (res && res.data && res.data.objects) {
                         for (let i = 0; i < res.data.objects.length; i++) {
                             let obj = res.data.objects[i];
-							this.push(obj);
+							let io = ids.indexOf(obj.id);
+							if (io !== -1) {
+								this[io].$set(obj);
+							} else {
+								this.push(obj);
+							}
                         }
                     }
                     resolve.apply(this, arguments);

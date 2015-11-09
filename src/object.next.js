@@ -16,7 +16,7 @@ export class BEObject extends BEModel {
 
 	constructor(data = {}, conf) {
 		super(conf);
-		BEModel.updateRegistry(this, 'collections', []);
+		this.$collections = [];
         this.$set(data);
     }
 
@@ -29,11 +29,11 @@ export class BEObject extends BEModel {
     $fetch() {
         return new Promise((resolve, reject) => {
             if (this.id || this.nickname) {
-                let promise = new BEApi(this.$config()).get('objects/' + (this.id || this.nickname));
+                let promise = new BEApi(this.$config).get('objects/' + (this.id || this.nickname));
                 promise.then((res) => {
                     if (res && res.data && res.data.object) {
                         this.$set(res.data.object);
-						this.$modified(false);
+						this.$modified = [];
 						resolve(res);
                     } else {
 						reject(res);
@@ -58,7 +58,7 @@ export class BEObject extends BEModel {
 	 */
 	$save(data = {}, force = false) {
 		this.$set(data);
-		let modified = this.$modified(),
+		let modified = this.$modified || [],
 			dataToSend = this.$toJSON(modified);
 			dataToSend.id = this.id,
 			dataToSend.nickname = this.nickname;
@@ -66,13 +66,13 @@ export class BEObject extends BEModel {
 			if (!force && modified.length == 0) {
 				return resolve(this.$toJSON());
 			}
-			let promise = new BEApi(this.$config()).post('objects', {
+			let promise = new BEApi(this.$config).post('objects', {
 				data: dataToSend
 			});
             promise.then((res) => {
                 if (res && res.data && res.data.object) {
                     this.$set(res.data.object);
-					this.$modified(false);
+					this.$modified = [];
 					resolve(res);
                 } else {
 					reject(res);
@@ -104,7 +104,7 @@ export class BEObject extends BEModel {
 	$remove() {
 		let promise = new Promise((resolve, reject) => {
 			if (!this.$isNew()) {
-				let promise = new BEApi(this.$config()).delete('objects/' + (this.id || this.nickname));
+				let promise = new BEApi(this.$config).delete('objects/' + (this.id || this.nickname));
 	            promise.then((res) => {
 	                resolve();
 	            }, (err) => {
@@ -116,7 +116,7 @@ export class BEObject extends BEModel {
 		});
 
 		promise.then(() => {
-			let collections = BEModel.readRegistry(this, 'collections');
+			let collections = this.$collections;
 			collections.forEach((collection) => {
 				let io = collection.indexOf(this);
 				if (io !== -1) {
@@ -134,7 +134,7 @@ export class BEObject extends BEModel {
 	 * @return {BEObject} The clone model.
 	 */
 	$clone() {
-		return new BEObject(this.$toJSON([], ['id']), this.$config());
+		return new BEObject(this.$toJSON([], ['id']), this.$config);
 	}
 
 	/**
@@ -171,19 +171,19 @@ export class BEObject extends BEModel {
 	            if (!this.relations) {
 	                this.relations = {};
 	            }
-				this.relations[k] = new BECollection(relations[k], this.$config());
+				this.relations[k] = new BECollection(relations[k], this.$config);
 	        }
 			delete data.relations;
 		}
 
 		// create a BECollection for the `children` field
         if (children && !this.children) {
-            this.children = new BECollection(children.url, this.$config());
+            this.children = new BECollection(children.url, this.$config);
 			if (children.sections) {
-                this.sections = new BECollection(children.sections.url, this.$config());
+                this.sections = new BECollection(children.sections.url, this.$config);
             }
 			if (children.contents) {
-                this.contents = new BECollection(children.contents.url, this.$config());
+                this.contents = new BECollection(children.contents.url, this.$config);
             }
 			delete data.children;
         }
@@ -200,7 +200,10 @@ export class BEObject extends BEModel {
 			// add to modified list
             if (this[k] !== d) {
                 this[k] = d;
-				this.$modified(k);
+				this.$modified = this.$modified || [];
+				if (this.$modified.indexOf(k) == -1) {
+					this.$modified.push(k);
+				}
             }
         }
 
@@ -208,7 +211,7 @@ export class BEObject extends BEModel {
         if (data.parent_id) {
             this.parent = new BEObject({
                 id: data.parent_id
-            }, this.$config());
+            }, this.$config);
             delete this.parent_id;
         } else {
             delete this.parent;
@@ -253,7 +256,7 @@ export class BEObject extends BEModel {
 	 * @return {BEApiQueue} A `BEApiQueue` instance scoped with the current Object.
 	 */
 	$query() {
-		let queue = new BEApiQueue(this.$config());
+		let queue = new BEApiQueue(this.$config);
 		if ('id' in this && 'nickname' in this) {
 			queue.identity(this);
 		} else {
@@ -261,7 +264,7 @@ export class BEObject extends BEModel {
 		}
 		queue.all((scope) => {
 			this.$set(scope);
-			this.$modified(false);
+			this.$modified = [];
 		});
 		return queue;
 	}
