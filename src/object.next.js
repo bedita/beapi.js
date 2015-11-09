@@ -156,6 +156,7 @@ export class BEObject extends BEModel {
 	 * @return {BEObject} The instance.
 	 */
     $set(data = {}, value) {
+		let before = this.$toJSON();
 		if (value !== undefined && typeof data == 'string') {
 			let key = data;
 			data = {};
@@ -164,7 +165,6 @@ export class BEObject extends BEModel {
         let relations = data.relations;
         let children = data.children;
 		let isoDateRegex = /\d{4,}\-\d{2,}\-\d{2,}T\d{2,}:\d{2,}:\d{2,}\+(\d{4,}|\d{2,}\:\d{2,})/;
-
 		// iterate relations and create BECollection for each key
 		if (relations) {
 	        for (let k in relations) {
@@ -172,22 +172,40 @@ export class BEObject extends BEModel {
 	                this.relations = {};
 	            }
 				this.relations[k] = new BECollection(relations[k], this.$config);
+				this.$trigger('changed:relation:' + k, this.relations[k]);
 	        }
+			this.$trigger('changed:relations', this.relations);
 			delete data.relations;
 		}
 
 		// create a BECollection for the `children` field
         if (children && !this.children) {
             this.children = new BECollection(children.url, this.$config);
+			this.$trigger('changed:children', this.children);
 			if (children.sections) {
                 this.sections = new BECollection(children.sections.url, this.$config);
+				this.$trigger('changed:sections', this.sections);
             }
 			if (children.contents) {
                 this.contents = new BECollection(children.contents.url, this.$config);
+				this.$trigger('changed:contents', this.contents);
             }
 			delete data.children;
         }
 
+		// create a BEObject for the parent if the defined
+        if (data.parent_id) {
+            this.parent = new BEObject({
+                id: data.parent_id
+            }, this.$config);
+			this.$trigger('changed:parent', this.parent);
+            delete this.parent_id;
+        } else {
+            delete this.parent;
+        }
+
+		this.$modified = this.$modified || [];
+		let changed = false;
         for (let k in data) {
             let d = data[k];
             //check if iso date
@@ -199,24 +217,18 @@ export class BEObject extends BEModel {
             }
 			// add to modified list
             if (this[k] !== d) {
+				let oldVal = this[k];
                 this[k] = d;
-				this.$modified = this.$modified || [];
 				if (this.$modified.indexOf(k) == -1) {
 					this.$modified.push(k);
+					changed = true;
 				}
+				this.$trigger('changed:' + k, this[d], oldVal);
             }
         }
-
-		// create a BEObject for the parent if the defined
-        if (data.parent_id) {
-            this.parent = new BEObject({
-                id: data.parent_id
-            }, this.$config);
-            delete this.parent_id;
-        } else {
-            delete this.parent;
-        }
-
+		if (changed) {
+			this.$trigger('changed', this.$toJSON(), before);
+		}
         return this;
     }
 
