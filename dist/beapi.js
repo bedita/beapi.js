@@ -347,9 +347,11 @@ var BECollection = (function (_BEArray) {
 				args[_key3] = arguments[_key3];
 			}
 
-			var obj = Array.prototype.splice.apply(this, args);
-			this.__removeCollectionFromObject(obj);
-			this.$trigger('remove', obj);
+			var obj = Array.prototype.pop.apply(this, args);
+			if (obj) {
+				this.__removeCollectionFromObject(obj);
+				this.$trigger('remove', obj);
+			}
 			return obj;
 		}
 
@@ -365,8 +367,10 @@ var BECollection = (function (_BEArray) {
 			}
 
 			var obj = Array.prototype.shift.apply(this, args);
-			this.__removeCollectionFromObject(obj);
-			this.$trigger('remove', obj);
+			if (obj) {
+				this.__removeCollectionFromObject(obj);
+				this.$trigger('remove', obj);
+			}
 			return obj;
 		}
 
@@ -450,8 +454,8 @@ var BECollection = (function (_BEArray) {
 						if (url) {
 							_this4.$url = url;
 						}
-						var ids = _this4.map(function () {
-							return this.id || this.$id();
+						var ids = _this4.map(function (obj) {
+							return obj.id || obj.$id();
 						});
 						var beapi = new BEApi(_this4.$config);
 						beapi.get(_this4.$url).then(function (res) {

@@ -65,9 +65,11 @@ export class BECollection extends BEArray {
 	 * (see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/pop})
 	 */
 	pop(...args) {
-		let obj = Array.prototype.splice.apply(this, args);
-		this.__removeCollectionFromObject(obj);
-		this.$trigger('remove', obj);
+		let obj = Array.prototype.pop.apply(this, args);
+		if (obj) {
+			this.__removeCollectionFromObject(obj);
+			this.$trigger('remove', obj);
+		}
 		return obj;
 	}
 
@@ -77,8 +79,10 @@ export class BECollection extends BEArray {
 	 */
 	shift(...args) {
 		let obj = Array.prototype.shift.apply(this, args);
-		this.__removeCollectionFromObject(obj);
-		this.$trigger('remove', obj);
+		if (obj) {
+			this.__removeCollectionFromObject(obj);
+			this.$trigger('remove', obj);
+		}
 		return obj;
 	}
 
@@ -144,8 +148,8 @@ export class BECollection extends BEArray {
 				if (url) {
 					this.$url = url;
 				}
-				let ids = this.map(function () {
-					return this.id || this.$id();
+				let ids = this.map((obj) => {
+					return obj.id || obj.$id();
 				});
 				let beapi = new BEApi(this.$config);
                 beapi.get(this.$url).then((res) => {
