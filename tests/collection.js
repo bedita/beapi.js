@@ -1,18 +1,12 @@
 describe('BECollection', function() {
-    var beapi, collection = null;
+    var collection = null;
 
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
 
-	describe('load', function () {
-		it('it should load the library', function() {
-            expect(BEApi).not.toBe(undefined);
-			expect(BECollection).not.toBe(undefined);
-			expect(BEObject).not.toBe(undefined);
-			beapi = new BEApi({
-	            baseUrl: CONF.baseUrl
-	        });
-        });
-	});
+    var beapi = new BEApi({
+        baseUrl: CONF.baseUrl
+    });
+
 	describe('get a collection', function() {
         beforeEach(function(done) {
             collection = new BECollection('objects', beapi.conf);

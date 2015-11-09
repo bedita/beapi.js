@@ -1,17 +1,12 @@
 describe('BEObject', function() {
-    var beapi, createdObject;
+    var createdObject;
 
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
 
-	describe('load', function () {
-		it('it should load the library', function() {
-            expect(BEApi).not.toBe(undefined);
-			expect(BEObject).not.toBe(undefined);
-			beapi = new BEApi({
-	            baseUrl: CONF.baseUrl
-	        });
-        });
-	});
+    var beapi = new BEApi({
+        baseUrl: CONF.baseUrl
+    });
+
 	describe('get an object', function() {
         var object = null;
         beforeEach(function(done) {

@@ -8,7 +8,7 @@
 export class BEModel {
 
 	constructor(conf = {}) {
-		this.$udid = BEModel.generateId();
+		this.$udid = BEModel.uid();
 		this.$modified = [];
 		this.$config = conf;
 	}
@@ -46,11 +46,77 @@ export class BEModel {
 	}
 
 	/**
+     * Add a callbacks for the specified trigger.
+     *
+     * @param {String} name The event name
+     * @param {Function} callback The callback function
+     * @return {Function} Destroy created listener with this function
+     */
+    $on(name, callback) {
+		let obj = this;
+        if (typeof callback == 'function') {
+            let objCallbacks = this.$callbacks = this.$callbacks || {};
+            let evtCallbacks = objCallbacks[name] = objCallbacks[name] || { 'length': 0 };
+            let len = evtCallbacks.length;
+            evtCallbacks[len] = {
+                fn: callback,
+                destroy: (function(callbacks, id) {
+                    return function() {
+                        if (typeof callbacks[id] !== undefined) {
+                            delete callbacks[id];
+                        }
+                    }
+                }.bind(this))(objCallbacks[name], len)
+            }
+            evtCallbacks.length += 1;
+            return this.$callbacks[name][len].destroy;
+        }
+    }
+
+	/**
+     * Remove all listeners.
+     *
+     * @param {String} name Optional event name to reset
+     */
+    $off(name) {
+        let callbacks = this.$callbacks;
+        if (callbacks && name && callbacks[name]) {
+            let clbs = callbacks[name];
+            for (let i in clbs) {
+                if (typeof clbs[i] === 'object' && typeof clbs[i].destroy === 'function') {
+                    clbs[i].destroy.call(this);
+                }
+            }
+        } else {
+        	this.$callbacks = {};
+		}
+    }
+
+	/**
+     * Trigger a callback.
+     *
+     * @param {*} obj The object that triggers events
+     * @param {String} name Event name
+     * @param {Array} ...args Arguments to pass to callback functions
+     * @exec callback functions
+     */
+    $trigger(name, ...args) {
+        let objCallbacks = this.$callbacks || {};
+        let evtCallbacks = objCallbacks[name] || {};
+        for (let k in evtCallbacks) {
+            let clb = evtCallbacks[k];
+            if (typeof clb === 'object' && typeof clb.fn === 'function') {
+                clb.fn.apply(this, args);
+            }
+        }
+    }
+
+	/**
 	 * Generate an unique id.
 	 * @static
 	 * @return {String|Number} An unique id.
 	 */
-	static generateId() {
+	static uid() {
 		this.__generated = this.__generated || 0;
 		let id = '$' + this.__generated;
 		this.__generated += 1;
@@ -71,8 +137,40 @@ export class BEArray extends Array {
 
 	constructor(items = [], conf = {}) {
 		super(items);
-		this.$udid = BEModel.generateId();
+		this.$udid = BEModel.uid();
 		this.$config = conf;
+	}
+
+	/**
+     * Add a callbacks for the specified trigger.
+     *
+     * @param {String} name The event name
+     * @param {Function} callback The callback function
+     * @return {Function} Destroy created listener with this function
+     */
+    $on(name, callback) {
+		return BEModel.prototype.$on.call(this);
+	}
+
+	/**
+     * Remove all listeners.
+     *
+     * @param {String} name Optional event name to reset
+     */
+    $off(name = null) {
+		return BEModel.prototype.$off.call(this);
+	}
+
+	/**
+     * Trigger a callback.
+     *
+     * @param {*} obj The object that triggers events
+     * @param {String} name Event name
+     * @param {Array} ...args Arguments to pass to callback functions
+     * @exec callback functions
+     */
+    $trigger(name, ...args) {
+		return BEModel.prototype.$trigger.call(this);
 	}
 
 	/**
