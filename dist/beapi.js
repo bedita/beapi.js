@@ -2,7 +2,7 @@
 
 var _bind = Function.prototype.bind;
 
-var _get = function get(_x18, _x19, _x20) { var _again = true; _function: while (_again) { var object = _x18, property = _x19, receiver = _x20; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x18 = parent; _x19 = property; _x20 = receiver; _again = true; desc = parent = undefined; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+var _get = function get(_x22, _x23, _x24) { var _again = true; _function: while (_again) { var object = _x22, property = _x23, receiver = _x24; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x22 = parent; _x23 = property; _x24 = receiver; _again = true; desc = parent = undefined; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
@@ -28,12 +28,14 @@ try {
  */
 
 var BEModel = (function () {
-	function BEModel(conf) {
+	function BEModel() {
+		var conf = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
 		_classCallCheck(this, BEModel);
 
-		this.$udid = BEModel.generateId();
-		BEModel.updateRegistry(this, 'conf', conf);
-		BEModel.updateRegistry(this, 'modified', []);
+		this.$udid = BEModel.uid();
+		this.$modified = [];
+		this.$config = conf;
 	}
 
 	/**
@@ -54,48 +56,6 @@ var BEModel = (function () {
 		key: '$id',
 		value: function $id() {
 			return this.$udid;
-		}
-
-		/**
-   * Get or set configuration params.
-   * @param {Object} conf An optional set of configuration params.
-   * @return {Object} The current configuration set.
-   */
-	}, {
-		key: '$config',
-		value: function $config(conf) {
-			if (conf) {
-				return BEModel.updateRegistry(this, 'conf', conf);
-			}
-			return BEModel.readRegistry(this, 'conf') || {};
-		}
-
-		/**
-   * Get a list of fields that need to sync with the server or add e new one.
-   * @param {String|Boolean} key An optional field name which needs to be synced. If `false` is passed, the array will be resetted.
-   * @return {Array} A list of fields which need to be synced.
-   */
-	}, {
-		key: '$modified',
-		value: function $modified(key) {
-			var modified = BEModel.readRegistry(this, 'modified') || [];
-			if (key === false) {
-				return BEModel.updateRegistry(this, 'modified', []);
-			} else if (key && modified.indexOf(key) === -1) {
-				modified.push(key);
-				return BEModel.updateRegistry(this, 'modified', modified);
-			}
-			return BEModel.readRegistry(this, 'modified');
-		}
-
-		/**
-   * Destroy a model and remove its references from the registry.
-   * @return {Boolean} The model has actually been removed.
-   */
-	}, {
-		key: '$remove',
-		value: function $remove() {
-			return BEModel.removeFromRegistry(this);
 		}
 
 		/**
@@ -125,67 +85,94 @@ var BEModel = (function () {
 		}
 
 		/**
+      * Add a callbacks for the specified trigger.
+      *
+      * @param {String} name The event name
+      * @param {Function} callback The callback function
+      * @return {Function} Destroy created listener with this function
+      */
+	}, {
+		key: '$on',
+		value: function $on(name, callback) {
+			var obj = this;
+			if (typeof callback == 'function') {
+				var objCallbacks = this.$callbacks = this.$callbacks || {};
+				var evtCallbacks = objCallbacks[name] = objCallbacks[name] || { 'length': 0 };
+				var len = evtCallbacks.length;
+				evtCallbacks[len] = {
+					fn: callback,
+					destroy: (function (callbacks, id) {
+						return function () {
+							if (typeof callbacks[id] !== undefined) {
+								delete callbacks[id];
+							}
+						};
+					}).bind(this)(objCallbacks[name], len)
+				};
+				evtCallbacks.length += 1;
+				return this.$callbacks[name][len].destroy;
+			}
+		}
+
+		/**
+      * Remove all listeners.
+      *
+      * @param {String} name Optional event name to reset
+      */
+	}, {
+		key: '$off',
+		value: function $off(name) {
+			var callbacks = this.$callbacks;
+			if (callbacks && name && callbacks[name]) {
+				var clbs = callbacks[name];
+				for (var i in clbs) {
+					if (typeof clbs[i] === 'object' && typeof clbs[i].destroy === 'function') {
+						clbs[i].destroy.call(this);
+					}
+				}
+			} else {
+				this.$callbacks = {};
+			}
+		}
+
+		/**
+      * Trigger a callback.
+      *
+      * @param {*} obj The object that triggers events
+      * @param {String} name Event name
+      * @param {Array} ...args Arguments to pass to callback functions
+      * @exec callback functions
+      */
+	}, {
+		key: '$trigger',
+		value: function $trigger(name) {
+			var objCallbacks = this.$callbacks || {};
+			var evtCallbacks = objCallbacks[name] || {};
+
+			for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+				args[_key - 1] = arguments[_key];
+			}
+
+			for (var k in evtCallbacks) {
+				var clb = evtCallbacks[k];
+				if (typeof clb === 'object' && typeof clb.fn === 'function') {
+					clb.fn.apply(this, args);
+				}
+			}
+		}
+
+		/**
    * Generate an unique id.
    * @static
    * @return {String|Number} An unique id.
    */
 	}], [{
-		key: 'generateId',
-		value: function generateId() {
+		key: 'uid',
+		value: function uid() {
 			this.__generated = this.__generated || 0;
 			var id = '$' + this.__generated;
 			this.__generated += 1;
 			return id;
-		}
-
-		/**
-   * Read a value stored in the registry for a specific model.
-   * @static
-   * @param {Object|String|Number} The model or its registry id.
-   * @return {*} The stored value.
-   */
-	}, {
-		key: 'readRegistry',
-		value: function readRegistry(obj, key) {
-			this.registry = this.registry || {};
-			var udid = typeof obj.$id === 'function' ? obj.$id() : obj;
-			if (udid) {
-				this.registry[udid] = this.registry[udid] || {};
-				return this.registry[udid][key];
-			}
-		}
-
-		/**
-   * Update a value stored in the registry for a specific model.
-   * @static
-   * @param {Object|String|Number} The model or its registry id.
-   * @return {*} The stored value.
-   */
-	}, {
-		key: 'updateRegistry',
-		value: function updateRegistry(obj, key, value) {
-			this.registry = this.registry || {};
-			var udid = typeof obj.$id === 'function' ? obj.$id() : obj;
-			if (udid) {
-				this.registry[udid] = this.registry[udid] || {};
-				this.registry[udid][key] = value;
-				return value;
-			}
-		}
-
-		/**
-   * Remove a model entry from the registry.
-   * @static
-   * @param {Object|String|Number} The model or its registry id.
-   */
-	}, {
-		key: 'removeFromRegistry',
-		value: function removeFromRegistry(obj) {
-			this.registry = this.registry || {};
-			var udid = typeof obj.$id === 'function' ? obj.$id() : obj;
-			if (udid) {
-				delete this.registry[udid];
-			}
 		}
 	}]);
 
@@ -195,14 +182,15 @@ var BEModel = (function () {
 var BEArray = (function (_Array) {
 	_inherits(BEArray, _Array);
 
-	function BEArray(items, conf) {
-		if (items === undefined) items = [];
+	function BEArray() {
+		var items = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
+		var conf = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
 		_classCallCheck(this, BEArray);
 
 		_get(Object.getPrototypeOf(BEArray.prototype), 'constructor', this).call(this, items);
-		this.$udid = BEModel.generateId();
-		BEModel.updateRegistry(this, 'conf', conf);
+		this.$udid = BEModel.uid();
+		this.$config = conf;
 	}
 
 	/**
@@ -215,36 +203,54 @@ var BEArray = (function (_Array) {
   */
 
 	/**
-  * Get the client registry ID.
-  * @return {String|Number} The client registry ID.
-  */
+     * Add a callbacks for the specified trigger.
+     *
+     * @param {String} name The event name
+     * @param {Function} callback The callback function
+     * @return {Function} Destroy created listener with this function
+     */
 
 	_createClass(BEArray, [{
+		key: '$on',
+		value: function $on(name, callback) {
+			return BEModel.prototype.$on.call(this);
+		}
+
+		/**
+      * Remove all listeners.
+      *
+      * @param {String} name Optional event name to reset
+      */
+	}, {
+		key: '$off',
+		value: function $off() {
+			var name = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+
+			return BEModel.prototype.$off.call(this);
+		}
+
+		/**
+      * Trigger a callback.
+      *
+      * @param {*} obj The object that triggers events
+      * @param {String} name Event name
+      * @param {Array} ...args Arguments to pass to callback functions
+      * @exec callback functions
+      */
+	}, {
+		key: '$trigger',
+		value: function $trigger(name) {
+			return BEModel.prototype.$trigger.call(this);
+		}
+
+		/**
+   * Get the client registry ID.
+   * @return {String|Number} The client registry ID.
+   */
+	}, {
 		key: '$id',
 		value: function $id() {
 			return BEModel.prototype.$id.call(this);
-		}
-
-		/**
-   * Get or set configuration params.
-   * @param {Object} conf An optional set of configuration params.
-   * @return {Object} The current configuration set.
-   */
-	}, {
-		key: '$config',
-		value: function $config(conf) {
-			return BEModel.prototype.$config.call(this, conf);
-		}
-
-		/**
-   * Get a list of fields that need to sync with the server or add e new one.
-   * @param {String|Boolean} key An optional field name which needs to be synced. If `false` is passed, the array will be resetted.
-   * @return {Array} A list of fields which need to be synced.
-   */
-	}, {
-		key: '$modified',
-		value: function $modified(key) {
-			return BEModel.prototype.$modified.call(this, key);
 		}
 	}]);
 
@@ -282,9 +288,9 @@ var BECollection = (function (_BEArray) {
 			}
 		}
 		this.forEach(function (obj) {
-			var collections = BEModel.readRegistry(obj, 'collections') || [];
+			var collections = obj.$collections || [];
 			collections.push(_this);
-			BEModel.updateRegistry(obj, 'collections', collections);
+			obj.$collections = collections;
 		});
 	}
 
@@ -308,19 +314,25 @@ var BECollection = (function (_BEArray) {
 		value: function push() {
 			var _this2 = this;
 
-			for (var _len = arguments.length, objects = Array(_len), _key = 0; _key < _len; _key++) {
-				objects[_key] = arguments[_key];
+			var added = [];
+
+			for (var _len2 = arguments.length, objects = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+				objects[_key2] = arguments[_key2];
 			}
 
 			objects.forEach(function (obj) {
 				if (!(obj instanceof BEObject)) {
-					obj = new BEObject(obj, _this2.$config());
+					obj = new BEObject(obj, _this2.$config);
 				}
 				if (_this2.indexOf(obj) == -1) {
 					_this2.__addCollectionToObject(obj);
+					added.push(obj);
 					Array.prototype.push.call(_this2, obj);
 				}
 			});
+			if (added.length) {
+				this.$trigger('add', added);
+			}
 			return this.length;
 		}
 
@@ -331,12 +343,13 @@ var BECollection = (function (_BEArray) {
 	}, {
 		key: 'pop',
 		value: function pop() {
-			for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-				args[_key2] = arguments[_key2];
+			for (var _len3 = arguments.length, args = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+				args[_key3] = arguments[_key3];
 			}
 
 			var obj = Array.prototype.splice.apply(this, args);
 			this.__removeCollectionFromObject(obj);
+			this.$trigger('remove', obj);
 			return obj;
 		}
 
@@ -347,12 +360,13 @@ var BECollection = (function (_BEArray) {
 	}, {
 		key: 'shift',
 		value: function shift() {
-			for (var _len3 = arguments.length, args = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-				args[_key3] = arguments[_key3];
+			for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+				args[_key4] = arguments[_key4];
 			}
 
 			var obj = Array.prototype.shift.apply(this, args);
 			this.__removeCollectionFromObject(obj);
+			this.$trigger('remove', obj);
 			return obj;
 		}
 
@@ -365,14 +379,15 @@ var BECollection = (function (_BEArray) {
 		value: function splice() {
 			var _this3 = this;
 
-			for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
-				args[_key4] = arguments[_key4];
+			for (var _len5 = arguments.length, args = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
+				args[_key5] = arguments[_key5];
 			}
 
 			var removed = Array.prototype.splice.apply(this, args);
 			if (removed) {
 				removed.forEach(function (obj) {
 					_this3.__removeCollectionFromObject(obj);
+					_this3.$trigger('remove', obj);
 				});
 			}
 			return removed;
@@ -387,11 +402,11 @@ var BECollection = (function (_BEArray) {
 	}, {
 		key: '__addCollectionToObject',
 		value: function __addCollectionToObject(obj) {
-			var collections = BEModel.readRegistry(obj, 'collections') || [];
+			var collections = obj.$collections || [];
 			var io = collections.indexOf(this);
 			if (io == -1) {
 				collections.push(this);
-				BEModel.updateRegistry(obj, 'collections', collections);
+				obj.$collections = collections;
 				return true;
 			}
 			return false;
@@ -406,11 +421,11 @@ var BECollection = (function (_BEArray) {
 	}, {
 		key: '__removeCollectionFromObject',
 		value: function __removeCollectionFromObject(obj) {
-			var collections = BEModel.readRegistry(obj, 'collections') || [];
+			var collections = obj.$collections || [];
 			var io = collections.indexOf(this);
 			if (io !== -1) {
 				collections.splice(io, 1);
-				BEModel.updateRegistry(obj, 'collections', collections);
+				obj.$collections = collections;
 				return true;
 			}
 			return false;
@@ -431,21 +446,31 @@ var BECollection = (function (_BEArray) {
 
 			return new Promise(function (resolve, reject) {
 				if (_this4.$url || url) {
-					if (url) {
-						_this4.$url = url;
-					}
-					var beapi = new BEApi(_this4.$config());
-					beapi.get(_this4.$url).then(function (res) {
-						if (res && res.data && res.data.objects) {
-							for (var i = 0; i < res.data.objects.length; i++) {
-								var obj = res.data.objects[i];
-								_this4.push(obj);
-							}
+					(function () {
+						if (url) {
+							_this4.$url = url;
 						}
-						resolve.apply(_this4, _arguments2);
-					}, function (err) {
-						reject.apply(_this4, _arguments2);
-					});
+						var ids = _this4.map(function () {
+							return this.id || this.$id();
+						});
+						var beapi = new BEApi(_this4.$config);
+						beapi.get(_this4.$url).then(function (res) {
+							if (res && res.data && res.data.objects) {
+								for (var i = 0; i < res.data.objects.length; i++) {
+									var obj = res.data.objects[i];
+									var io = ids.indexOf(obj.id);
+									if (io !== -1) {
+										_this4[io].$set(obj);
+									} else {
+										_this4.push(obj);
+									}
+								}
+							}
+							resolve.apply(_this4, _arguments2);
+						}, function (err) {
+							reject.apply(_this4, _arguments2);
+						});
+					})();
 				} else {
 					reject();
 				}
@@ -488,7 +513,7 @@ var BEObject = (function (_BEModel) {
 		_classCallCheck(this, BEObject);
 
 		_get(Object.getPrototypeOf(BEObject.prototype), 'constructor', this).call(this, conf);
-		BEModel.updateRegistry(this, 'collections', []);
+		this.$collections = [];
 		this.$set(data);
 	}
 
@@ -511,11 +536,11 @@ var BEObject = (function (_BEModel) {
 
 			return new Promise(function (resolve, reject) {
 				if (_this5.id || _this5.nickname) {
-					var promise = new BEApi(_this5.$config()).get('objects/' + (_this5.id || _this5.nickname));
+					var promise = new BEApi(_this5.$config).get('objects/' + (_this5.id || _this5.nickname));
 					promise.then(function (res) {
 						if (res && res.data && res.data.object) {
 							_this5.$set(res.data.object);
-							_this5.$modified(false);
+							_this5.$modified = [];
 							resolve(res);
 						} else {
 							reject(res);
@@ -547,20 +572,20 @@ var BEObject = (function (_BEModel) {
 			var force = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 
 			this.$set(data);
-			var modified = this.$modified(),
+			var modified = this.$modified || [],
 			    dataToSend = this.$toJSON(modified);
 			dataToSend.id = this.id, dataToSend.nickname = this.nickname;
 			return new Promise(function (resolve, reject) {
 				if (!force && modified.length == 0) {
 					return resolve(_this6.$toJSON());
 				}
-				var promise = new BEApi(_this6.$config()).post('objects', {
+				var promise = new BEApi(_this6.$config).post('objects', {
 					data: dataToSend
 				});
 				promise.then(function (res) {
 					if (res && res.data && res.data.object) {
 						_this6.$set(res.data.object);
-						_this6.$modified(false);
+						_this6.$modified = [];
 						resolve(res);
 					} else {
 						reject(res);
@@ -600,7 +625,7 @@ var BEObject = (function (_BEModel) {
 
 			var promise = new Promise(function (resolve, reject) {
 				if (!_this7.$isNew()) {
-					var _promise = new BEApi(_this7.$config())['delete']('objects/' + (_this7.id || _this7.nickname));
+					var _promise = new BEApi(_this7.$config)['delete']('objects/' + (_this7.id || _this7.nickname));
 					_promise.then(function (res) {
 						resolve();
 					}, function (err) {
@@ -612,7 +637,7 @@ var BEObject = (function (_BEModel) {
 			});
 
 			promise.then(function () {
-				var collections = BEModel.readRegistry(_this7, 'collections');
+				var collections = _this7.$collections;
 				collections.forEach(function (collection) {
 					var io = collection.indexOf(_this7);
 					if (io !== -1) {
@@ -632,7 +657,7 @@ var BEObject = (function (_BEModel) {
 	}, {
 		key: '$clone',
 		value: function $clone() {
-			return new BEObject(this.$toJSON([], ['id']), this.$config());
+			return new BEObject(this.$toJSON([], ['id']), this.$config);
 		}
 
 		/**
@@ -660,6 +685,7 @@ var BEObject = (function (_BEModel) {
 		value: function $set(data, value) {
 			if (data === undefined) data = {};
 
+			var before = this.$toJSON();
 			if (value !== undefined && typeof data == 'string') {
 				var key = data;
 				data = {};
@@ -668,30 +694,47 @@ var BEObject = (function (_BEModel) {
 			var relations = data.relations;
 			var children = data.children;
 			var isoDateRegex = /\d{4,}\-\d{2,}\-\d{2,}T\d{2,}:\d{2,}:\d{2,}\+(\d{4,}|\d{2,}\:\d{2,})/;
-
 			// iterate relations and create BECollection for each key
 			if (relations) {
 				for (var k in relations) {
 					if (!this.relations) {
 						this.relations = {};
 					}
-					this.relations[k] = new BECollection(relations[k], this.$config());
+					this.relations[k] = new BECollection(relations[k], this.$config);
+					this.$trigger('changed:relation:' + k, this.relations[k]);
 				}
+				this.$trigger('changed:relations', this.relations);
 				delete data.relations;
 			}
 
 			// create a BECollection for the `children` field
 			if (children && !this.children) {
-				this.children = new BECollection(children.url, this.$config());
+				this.children = new BECollection(children.url, this.$config);
+				this.$trigger('changed:children', this.children);
 				if (children.sections) {
-					this.sections = new BECollection(children.sections.url, this.$config());
+					this.sections = new BECollection(children.sections.url, this.$config);
+					this.$trigger('changed:sections', this.sections);
 				}
 				if (children.contents) {
-					this.contents = new BECollection(children.contents.url, this.$config());
+					this.contents = new BECollection(children.contents.url, this.$config);
+					this.$trigger('changed:contents', this.contents);
 				}
 				delete data.children;
 			}
 
+			// create a BEObject for the parent if the defined
+			if (data.parent_id) {
+				this.parent = new BEObject({
+					id: data.parent_id
+				}, this.$config);
+				this.$trigger('changed:parent', this.parent);
+				delete this.parent_id;
+			} else {
+				delete this.parent;
+			}
+
+			this.$modified = this.$modified || [];
+			var changed = false;
 			for (var k in data) {
 				var d = data[k];
 				//check if iso date
@@ -703,21 +746,18 @@ var BEObject = (function (_BEModel) {
 				}
 				// add to modified list
 				if (this[k] !== d) {
+					var oldVal = this[k];
 					this[k] = d;
-					this.$modified(k);
+					if (this.$modified.indexOf(k) == -1) {
+						this.$modified.push(k);
+						changed = true;
+					}
+					this.$trigger('changed:' + k, this[d], oldVal);
 				}
 			}
-
-			// create a BEObject for the parent if the defined
-			if (data.parent_id) {
-				this.parent = new BEObject({
-					id: data.parent_id
-				}, this.$config());
-				delete this.parent_id;
-			} else {
-				delete this.parent;
+			if (changed) {
+				this.$trigger('changed', this.$toJSON(), before);
 			}
-
 			return this;
 		}
 
@@ -763,7 +803,7 @@ var BEObject = (function (_BEModel) {
 		value: function $query() {
 			var _this8 = this;
 
-			var queue = new BEApiQueue(this.$config());
+			var queue = new BEApiQueue(this.$config);
 			if ('id' in this && 'nickname' in this) {
 				queue.identity(this);
 			} else {
@@ -771,7 +811,7 @@ var BEObject = (function (_BEModel) {
 			}
 			queue.all(function (scope) {
 				_this8.$set(scope);
-				_this8.$modified(false);
+				_this8.$modified = [];
 			});
 			return queue;
 		}
@@ -1008,8 +1048,8 @@ function _processInput() {
 function _extend() {
 	var res = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-	for (var _len5 = arguments.length, args = Array(_len5 > 1 ? _len5 - 1 : 0), _key5 = 1; _key5 < _len5; _key5++) {
-		args[_key5 - 1] = arguments[_key5];
+	for (var _len6 = arguments.length, args = Array(_len6 > 1 ? _len6 - 1 : 0), _key6 = 1; _key6 < _len6; _key6++) {
+		args[_key6 - 1] = arguments[_key6];
 	}
 
 	for (var i = 0; i < args.length; i++) {
@@ -1711,8 +1751,8 @@ var BEApiQueue = (function () {
 
 			(function (method) {
 				BEApiQueue.prototype[method] = function () {
-					for (var _len6 = arguments.length, args = Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
-						args[_key6] = arguments[_key6];
+					for (var _len7 = arguments.length, args = Array(_len7), _key7 = 0; _key7 < _len7; _key7++) {
+						args[_key7] = arguments[_key7];
 					}
 
 					this.add(new BEApiQueueTask(method, args));
@@ -1786,8 +1826,8 @@ var BEApiQueueBaseMethod = (function () {
 	_createClass(BEApiQueueBaseMethod, [{
 		key: 'input',
 		value: function input(scope) {
-			for (var _len7 = arguments.length, args = Array(_len7 > 1 ? _len7 - 1 : 0), _key7 = 1; _key7 < _len7; _key7++) {
-				args[_key7 - 1] = arguments[_key7];
+			for (var _len8 = arguments.length, args = Array(_len8 > 1 ? _len8 - 1 : 0), _key8 = 1; _key8 < _len8; _key8++) {
+				args[_key8 - 1] = arguments[_key8];
 			}
 
 			return new Promise(function (resolve) {
