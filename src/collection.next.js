@@ -55,7 +55,10 @@ export class BECollection extends BEArray {
 			}
 		});
 		if (added.length) {
-			this.$trigger('add', added);
+			added.forEach((obj) => {
+				this.$trigger('child:added', obj);
+			});
+			this.$trigger('added', added);
 		}
 		return this.length;
 	}
@@ -68,7 +71,8 @@ export class BECollection extends BEArray {
 		let obj = Array.prototype.pop.apply(this, args);
 		if (obj) {
 			this.__removeCollectionFromObject(obj);
-			this.$trigger('remove', obj);
+			this.$trigger('child:removed', obj);
+			this.$trigger('removed', [obj]);
 		}
 		return obj;
 	}
@@ -81,7 +85,8 @@ export class BECollection extends BEArray {
 		let obj = Array.prototype.shift.apply(this, args);
 		if (obj) {
 			this.__removeCollectionFromObject(obj);
-			this.$trigger('remove', obj);
+			this.$trigger('child:removed', obj);
+			this.$trigger('removed', [obj]);
 		}
 		return obj;
 	}
@@ -95,8 +100,9 @@ export class BECollection extends BEArray {
 		if (removed) {
 			removed.forEach((obj) => {
 				this.__removeCollectionFromObject(obj);
-				this.$trigger('remove', obj);
+				this.$trigger('child:removed', obj);
 			});
+			this.$trigger('removed', removed);
 		}
 		return removed;
 	}

@@ -228,6 +228,9 @@ export class BEObject extends BEModel {
         }
 		if (changed) {
 			this.$trigger('changed', this.$toJSON(), before);
+			(this.$collections || []).forEach((collection) => {
+				collection.trigger('child:updated', this);
+			});
 		}
         return this;
     }
