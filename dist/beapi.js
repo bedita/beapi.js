@@ -1969,33 +1969,47 @@ var BEApiQueueObjects = (function (_BEApiQueueBaseMethod2) {
 
 BEApiQueue.register('objects', BEApiQueueObjects);
 
-var BEApiQueuePoster = (function (_BEApiQueueBaseMethod3) {
-	_inherits(BEApiQueuePoster, _BEApiQueueBaseMethod3);
+var BEApiQueuePosters = (function (_BEApiQueueBaseMethod3) {
+	_inherits(BEApiQueuePosters, _BEApiQueueBaseMethod3);
 
-	function BEApiQueuePoster() {
+	function BEApiQueuePosters() {
 		var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-		_classCallCheck(this, BEApiQueuePoster);
+		_classCallCheck(this, BEApiQueuePosters);
 
-		_get(Object.getPrototypeOf(BEApiQueuePoster.prototype), 'constructor', this).call(this, options);
+		_get(Object.getPrototypeOf(BEApiQueuePosters.prototype), 'constructor', this).call(this, options);
 	}
 
-	_createClass(BEApiQueuePoster, [{
+	_createClass(BEApiQueuePosters, [{
 		key: 'input',
 		value: function input(scope) {
 			var _this15 = this;
 
-			return new Promise(function (resolve) {
+			return new Promise(function (resolve, reject) {
 				var suffix = '';
 				if (_this15.options) {
-					suffix = '?';
 					for (var k in _this15.options) {
+						suffix = suffix || '?';
 						suffix += k + '=' + _this15.options[k];
 					}
 				}
-				resolve([{
-					url: 'poster/' + scope.id + suffix
-				}]);
+				if (!Array.isArray(scope)) {
+					resolve([{
+						url: 'posters/' + scope.id + suffix
+					}]);
+				} else {
+					var ids = scope.map(function (obj) {
+						return obj.id;
+					});
+					var oldSuffix = suffix;
+					suffix = '?id=' + ids.join(',');
+					if (oldSuffix) {
+						suffix += '&' + oldSuffix.substring(1, oldSuffix.length);
+					}
+					resolve([{
+						url: 'posters' + suffix
+					}]);
+				}
 			});
 		}
 	}, {
@@ -2003,17 +2017,19 @@ var BEApiQueuePoster = (function (_BEApiQueueBaseMethod3) {
 		value: function transform(scope, res) {
 			return new Promise(function (resolve, reject) {
 				if (res && res.data) {
-					scope['poster'] = res.data;
+					if (!Array.isArray(scope)) {
+						scope['poster'] = res.data;
+					}
 				}
 				resolve(scope);
 			});
 		}
 	}]);
 
-	return BEApiQueuePoster;
+	return BEApiQueuePosters;
 })(BEApiQueueBaseMethod);
 
-BEApiQueue.register('poster', BEApiQueuePoster);
+BEApiQueue.register('posters', BEApiQueuePosters);
 
 var BEApiQueueRelation = (function (_BEApiQueueBaseMethod4) {
 	_inherits(BEApiQueueRelation, _BEApiQueueBaseMethod4);
