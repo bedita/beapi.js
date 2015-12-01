@@ -14,7 +14,7 @@ describe('BEObject', function() {
 			object
 				.$query()
 				.relation('attach')
-				.relation('poster')
+				.posters()
 				.get()
 				.then(function(obj) {
 					response = obj;
@@ -30,6 +30,7 @@ describe('BEObject', function() {
             expect(typeof object.id).toEqual('number');
             expect(typeof object.nickname).toEqual('string');
             expect(object.created instanceof Date).toEqual(true);
+            expect(typeof object.poster.id).toEqual('number');
         });
     });
 	describe('create an object simulating token expiration', function() {
