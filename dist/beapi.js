@@ -770,7 +770,7 @@ var BEObject = (function (_BEModel) {
 			if (changed) {
 				this.$trigger('changed', this.$toJSON(), before);
 				(this.$collections || []).forEach(function (collection) {
-					collection.trigger('child:updated', _this8);
+					collection.$trigger('child:updated', _this8);
 				});
 			}
 			return this;
