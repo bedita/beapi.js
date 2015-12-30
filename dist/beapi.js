@@ -213,7 +213,7 @@ var BEArray = (function (_Array) {
 	_createClass(BEArray, [{
 		key: '$on',
 		value: function $on(name, callback) {
-			return BEModel.prototype.$on.call(this);
+			return BEModel.prototype.$on.apply(this, arguments);
 		}
 
 		/**
@@ -226,7 +226,7 @@ var BEArray = (function (_Array) {
 		value: function $off() {
 			var name = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
 
-			return BEModel.prototype.$off.call(this);
+			return BEModel.prototype.$off.apply(this, arguments);
 		}
 
 		/**
@@ -240,7 +240,11 @@ var BEArray = (function (_Array) {
 	}, {
 		key: '$trigger',
 		value: function $trigger(name) {
-			return BEModel.prototype.$trigger.call(this);
+			for (var _len2 = arguments.length, args = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+				args[_key2 - 1] = arguments[_key2];
+			}
+
+			return BEModel.prototype.$trigger.apply(this, arguments);
 		}
 
 		/**
@@ -316,8 +320,8 @@ var BECollection = (function (_BEArray) {
 
 			var added = [];
 
-			for (var _len2 = arguments.length, objects = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-				objects[_key2] = arguments[_key2];
+			for (var _len3 = arguments.length, objects = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+				objects[_key3] = arguments[_key3];
 			}
 
 			objects.forEach(function (obj) {
@@ -346,8 +350,8 @@ var BECollection = (function (_BEArray) {
 	}, {
 		key: 'pop',
 		value: function pop() {
-			for (var _len3 = arguments.length, args = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-				args[_key3] = arguments[_key3];
+			for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+				args[_key4] = arguments[_key4];
 			}
 
 			var obj = Array.prototype.pop.apply(this, args);
@@ -366,8 +370,8 @@ var BECollection = (function (_BEArray) {
 	}, {
 		key: 'shift',
 		value: function shift() {
-			for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
-				args[_key4] = arguments[_key4];
+			for (var _len5 = arguments.length, args = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
+				args[_key5] = arguments[_key5];
 			}
 
 			var obj = Array.prototype.shift.apply(this, args);
@@ -388,8 +392,8 @@ var BECollection = (function (_BEArray) {
 		value: function splice() {
 			var _this3 = this;
 
-			for (var _len5 = arguments.length, args = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
-				args[_key5] = arguments[_key5];
+			for (var _len6 = arguments.length, args = Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
+				args[_key6] = arguments[_key6];
 			}
 
 			var removed = Array.prototype.splice.apply(this, args);
@@ -1063,8 +1067,8 @@ function _processInput() {
 function _extend() {
 	var res = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-	for (var _len6 = arguments.length, args = Array(_len6 > 1 ? _len6 - 1 : 0), _key6 = 1; _key6 < _len6; _key6++) {
-		args[_key6 - 1] = arguments[_key6];
+	for (var _len7 = arguments.length, args = Array(_len7 > 1 ? _len7 - 1 : 0), _key7 = 1; _key7 < _len7; _key7++) {
+		args[_key7 - 1] = arguments[_key7];
 	}
 
 	for (var i = 0; i < args.length; i++) {
@@ -1766,8 +1770,8 @@ var BEApiQueue = (function () {
 
 			(function (method) {
 				BEApiQueue.prototype[method] = function () {
-					for (var _len7 = arguments.length, args = Array(_len7), _key7 = 0; _key7 < _len7; _key7++) {
-						args[_key7] = arguments[_key7];
+					for (var _len8 = arguments.length, args = Array(_len8), _key8 = 0; _key8 < _len8; _key8++) {
+						args[_key8] = arguments[_key8];
 					}
 
 					this.add(new BEApiQueueTask(method, args));
@@ -1841,8 +1845,8 @@ var BEApiQueueBaseMethod = (function () {
 	_createClass(BEApiQueueBaseMethod, [{
 		key: 'input',
 		value: function input(scope) {
-			for (var _len8 = arguments.length, args = Array(_len8 > 1 ? _len8 - 1 : 0), _key8 = 1; _key8 < _len8; _key8++) {
-				args[_key8 - 1] = arguments[_key8];
+			for (var _len9 = arguments.length, args = Array(_len9 > 1 ? _len9 - 1 : 0), _key9 = 1; _key9 < _len9; _key9++) {
+				args[_key9 - 1] = arguments[_key9];
 			}
 
 			return new Promise(function (resolve) {
