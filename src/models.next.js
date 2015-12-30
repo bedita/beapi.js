@@ -149,7 +149,7 @@ export class BEArray extends Array {
      * @return {Function} Destroy created listener with this function
      */
     $on(name, callback) {
-		return BEModel.prototype.$on.call(this);
+		return BEModel.prototype.$on.apply(this, arguments);
 	}
 
 	/**
@@ -158,7 +158,7 @@ export class BEArray extends Array {
      * @param {String} name Optional event name to reset
      */
     $off(name = null) {
-		return BEModel.prototype.$off.call(this);
+		return BEModel.prototype.$off.apply(this, arguments);
 	}
 
 	/**
@@ -170,7 +170,7 @@ export class BEArray extends Array {
      * @exec callback functions
      */
     $trigger(name, ...args) {
-		return BEModel.prototype.$trigger.call(this);
+		return BEModel.prototype.$trigger.apply(this, arguments);
 	}
 
 	/**
